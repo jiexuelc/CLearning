@@ -42,7 +42,6 @@ int main()
 		perror ("close");
 		return -1;
 	}
-
 	printf ("任务完成...\n");
 	return 0;	
 }
