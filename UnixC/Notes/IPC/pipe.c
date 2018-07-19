@@ -11,6 +11,23 @@
 #include <string.h>
 #include <sys/wait.h>
 
+/*
+ * gets函数不检查越界(使用很危险)，fgets函数当字符串 <= size-2长度时包含换行符
+ * 本函数利用标准输入与fgets函数封装成gets_s函数，实现gets函数的同时，可以避免越界
+ */
+char *gets_s(char *str, size_t num)
+{
+    if (0 != fgets(str, num, stdin))
+    {
+        size_t len = strlen(str);
+        if (len > 0 && str[len-1] == '\n')
+            str[len-1] = '\0';
+        return str;
+    }
+    return 0;
+}
+
+
 int main() {
 	printf ("父进程，创建管道...\n");
 
@@ -57,7 +74,7 @@ int main() {
 	
 	while (1) {
 		char buf[1024];
-		gets (buf);
+		gets_s (buf, sizeof (buf));
 		//scanf ("%s", buf);
 		if (0 == strcmp (buf, "!"))
 			break;
