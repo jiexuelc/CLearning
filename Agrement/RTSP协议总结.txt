@@ -1,0 +1,210 @@
+RTSP协议
+
+--------------------------------------------------------------------------------------
+1.简介
+  RTSP，实时流协议，是一个C/S多媒体节目协议，它可以控制流媒体数据在IP网络上的发送，同时提供用于音频和视频流的“VCR模式”远程控制功能，如停止、快进、快退和定位。
+  它本身并不传输数据，RTSP的作用相当于流媒体服务器的远程控制。服务器端可以自行选择使用TCP或UDP来传送串流内容，它的语法和运作跟HTTP 1.1类似，但并不特别强调时间同步，所以比较能容忍网络延迟。而且允许同时多个串流需求控制（Multicast），除了可以降低服务器端的网络用量，还可以支持多方视频会议（Video  onference）。 因为与HTTP1.1的运作方式相似，所以代理服务器《Proxy》的快取功能《Cache》也同样适用于RTSP，并因RTSP具有重新导向功能，可视实际负载情况来转换提供服务的服务器，以避免过大的负载集中于同一服务器而造成延迟。
+  RTSP又是一个应用层协议，用来与诸如RTP、RSVP等更低层的协议一起，提供基于Internet的整套流化服务。
+  ------------------------------------------------------------------------------------
+2.RTSP和http的区别和联系
+  (1)联系：两者都用纯文本来发送消息，且RTSP协议的语法也和HTTP类似。RTSP一开始这样设计，也是为了能够兼容使用以前写的HTTP协议分析代码 。
+  (2)区别：RTSP是有状态的，不同的是RTSP的命令需要知道现在正处于一个什么状态，也就是说rtsp的命令总是按照顺序来发送，某个命令总在另外一个命令之前要发送。Rtsp不管处于什么状态都不会去断掉连接。，而http则不保存状态，协议在发送一个命令以后，连接就会断开，且命令之间是没有依赖性的。rtsp协议使用554端口，http使用80端口。
+  ------------------------------------------------------------------------------------
+3.RTSP和SIP的区别和联系
+  (1)联系：SIp和RTSP都是应用层的控制协议，负责一次通信过程的建立和控制和结束，不负责中间的传输部分。他们都是基于纯文本的信令协议，穿墙性能良好。支持tcp、udp，支持多方通信。他们都需要服务器支持，都支持会话中重定向。sip和rtsp 都使用sdp协议来传送媒体参数，使用rtp（rtcp）协议来传输媒体流。
+  (2)区别：rtsp是专门为流媒体制定的协议，在多个媒体流的时间同步方面比sip强大。rtsp还提供网络负载均衡的功能，减轻服务器压力和网络带宽要求。sip一般用来创建一次音频、视频通话（双向），而rtsp一般用来做视频点播、视频监控等（单向）。当然，从原理上讲，rtsp也可以做双向的视频通话。
+  ------------------------------------------------------------------------------------
+4.RTSP和RTP(rtcp)的关系
+  rtsp负责建立和控制会话，rtp负责多媒体的传输，rtcp配合rtp做控制和流量统计，他们是合作的关系。
+  ------------------------------------------------------------------------------------
+5.RTSP消息
+  RTSP的消息有两大类，一是请求消息(request)，一是回应消息(response)，两种消息的格式不同
+    请求消息格式：
+      方法 URI RTSP版本 CR LF
+      消息头 CR LF CR LF         
+      消息体 CR LF
+    其中方法包括OPTIONS、SETUP、PLAY、TEARDOWN等待，URI是接收方（服务端）的地址，例如：rtsp://192.168.22.136:5000/v0，每行后面的CR LF表示回车换行，需要接收端有相应的解析，最后一个消息头需要有两个CR LF。
+    回应消息格式：
+      RTSP版本 状态码 解释 CR LF
+      消息头 CR LF CR LF
+      消息体 CR LF
+    其中RTSP版本一般都是RTSP/1.0，状态码是一个数值，200表示成功，解释是与状态码对应的文本解释。
+      状态码由三位数组成，表示方法执行的结果，定义如下：
+      1XX：保留，将来使用；
+      2XX：成功，操作被接收、理解、接受(received,understand,accepted)；
+      3XX：重定向，要完成操作必须进行进一步操作；
+      4XX：客户端出错，请求有语法错误或无法实现；
+      5XX：服务器出错，服务器无法实现合法的请求。
+  ------------------------------------------------------------------------------------
+6.RTSP的方法
+RTSP中定义的方法有：OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, SCALE, GET_PARAMETER, SET_PARAMETER
+  ---------------------------------------------------------------
+  (P:表示presentation, S: 媒体流stream)
+    方法名 	        方向 	    对象 	实现需求 
+    DESCRIBE 	    C->S 	    P,S 	recommended 
+    ANNOUNCE 	    C->S,S->C 	P,S 	optional 
+    GET_PARAMETER 	C->S,S->C 	P,S 	optional 
+    OPTIONS 	    C->S,S->C 	P,S 	required(S->C:optional) 
+    PAUSE 	        C->S 	    P,S 	recommended
+    PLAY 	        C->S 	    P,S 	required 
+    RECORD 	        C->S 	    P,S 	optional 
+    REDIRECT 	    S->C 	    P,S 	optional 
+    SETUP 	        C->S 	    S 	    required 
+    SET_PARAMETER 	C->S,S->C 	P,S 	optional 
+    TEARDOWN 	    C->S 	    P,S 	required
+  ---------------------------------------------------------------
+  (1)OPTIONS方法
+    OPTIONS请求有两种作用
+      1、用于查询能力
+      2、用于保活
+    OPTIONS请求可能在任何时候发出，例如客户端将要发出一个非标准的请求时。它不影响服务器状态。
+    目的是得到服务器提供的可用方法:
+      OPTIONS rtsp://192.168.20.136:5000/xxx666 RTSP/1.0
+      CSeq: 1         //每个消息都有序号来标记，第一个包通常是option请求消息
+      User-Agent: VLC media player (LIVE555 Streaming Media v2005.11.10)
+      服务器的回应信息包括提供的一些方法,例如:
+      RTSP/1.0 200 OK
+      Server: UServer 0.9.7_rc1
+      Cseq: 1         //每个回应消息的cseq数值和请求消息的cseq相对应
+      Public: OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, SCALE, GET_PARAMETER //服务器提供的可用的方法
+  (2)DESCRIBE方法
+    DESCRIBE方法从服务器检索表示的描述或媒体对象，这些资源通过请求统一资源定位符（the request URL）识别。
+    此方法可能结合使用Accept首部域来指定客户端理解的描述格式。服务器端用被请求资源的描述对客户端作出响应。
+    DESCRIBE的答复-响应对（reply-response pair）组成了RTSP的媒体初始化阶段。
+    C向S发起DESCRIBE请求,为了得到会话描述信息(SDP):
+      DESCRIBE rtsp://192.168.20.136:5000/xxx666 RTSP/1.0
+      CSeq: 2
+      token:
+      Accept: application/sdp
+      User-Agent: VLC media player (LIVE555 Streaming Media v2005.11.10)
+      服务器回应一些对此会话的描述信息(sdp):
+      RTSP/1.0 200 OK
+      Server: UServer 0.9.7_rc1
+      Cseq: 2
+      ...
+  (3)SETUP方法
+    SETUP请求为URI指定流式媒体的传输机制，包括了所有传输初始化信息。客户端能够发出一个SETUP请求为正在播放的媒体流改变传输参数，服务器可能同意这些参数的改变。若是不同意，它必须响应错误“455 Method Not Valid In This State”。 
+    为了尽量绕开防火墙干涉，即使它不会影响参数，客户端也必须指出传输参数，例如，指出服务器向外发布的固定的广播地址。
+    客户端提醒服务器建立会话,并确定传输模式:
+      SETUP rtsp://192.168.20.136:5000/xxx666/trackID=0 RTSP/1.0
+      CSeq: 3
+      Transport: RTP/AVP/TCP;unicast;interleaved=0-1      
+      User-Agent: VLC media player (LIVE555 Streaming Media v2005.11.10)
+      //uri中带有trackID＝0，表示对该通道进行设置。Transport参数设置了传输模式，包的结构。接下来的数据包头部第二个字节位置就是interleaved，它的值是每个通道都不同的，trackID＝0的interleaved值有两个0或1，0表示rtp包，1表示rtcp包，接受端根据interleaved的值来区别是哪种数据包。
+      服务器回应信息:
+      RTSP/1.0 200 OK
+      Server: UServer 0.9.7_rc1
+      Cseq: 3
+      Session: 6310936469860791894     //服务器回应的会话标识符
+      Cache-Control: no-cache
+      Transport: RTP/AVP/TCP;unicast;interleaved=0-1;ssrc=6B8B4567
+  (4)PLAY方法
+    PLAY方法告知服务器通过SETUP中指定的机制开始发送数据。
+    在尚未收到SETUP请求的成功应答之前，客户端不可以发出PLAY请求。
+    PLAY请求将正常播放时间（normal play time）定位到指定范围的起始处，并且传输数据流直到播放范围结束。
+    PLAY请求可能被管道化（pipelined），即放入队列中（queued）；服务器必须将PLAY请求放到队列中有序执行，既后一个PLAY请求需要等待前一个PLAY请求完成才能得到执行。
+    客户端发送播放请求:
+      PLAY rtsp://192.168.20.136:5000/xxx666 RTSP/1.0
+      CSeq: 4
+      Session: 6310936469860791894
+      Range: npt=0.000-      //设置播放时间的范围
+      User-Agent: VLC media player (LIVE555 Streaming Media v2005.11.10)
+      服务器回应信息:
+      RTSP/1.0 200 OK
+      Server: UServer 0.9.7_rc1
+      Cseq: 4
+      Session: 6310936469860791894
+      Range: npt=0.000000-
+      RTP-Info: url=trackID=0;seq=17040;rtptime=1467265309     
+      //seq和rtptime都是rtp包中的信息
+  (5)PAUSE方法
+    PAUSE请求引起媒体流传输的暂时中断。
+    如果请求URL中指定了具体的媒体流，那么只有该媒体流的播放和记录被暂停（halt）。比如，指定暂停音频，播放将会无声。
+    如果请求URL指定了一个表示或者媒体流已成组，那么在该表示或组中的所有当前活动流的传输将被暂停。
+    在重启播放或记录后，必须维护不同媒体轨迹（track）的同步。尽管服务器可能在暂停后，在timeout的时间内关闭会话，释放资源，但是任何资源都必须保存，其中timeout参数位于SETUP消息的会话头中。
+    PAUSE请求中可能包含一个Range首部域用来指定何时媒体流或表示暂停，我们称这个时刻为暂停点（pause point）。该首部域必须包含一个精确的值，而不是一个时间范围。媒体流的正常播放时间设置成暂停点。当服务器遇到在任何当前挂起（pending）的PLAY请求中指定的时间点后，暂停请求生效。如果Range首部域指定了一个时间超出了任何一个当前挂起的PLAY请求，将返回错误“457 Invalid Range” 。
+    如果一个媒体单元（比如一个音频或视频禎）正好在一个暂停点开始，那么表示将不会被播放或记录。如果Range首部域缺失，那么在收到暂停消息后媒体流传输立即中断，并且暂停点设置成当前正常播放时间。
+    利用PAUSE请求可忽视所有排队的PLAY请求，但必须维护媒体流中的暂停点。不带Range首部域的后继PLAY请求从暂停点重启播放。
+    比如，如果服务器有两个挂起的播放请求，播放范围（range）分别是10到15和20到29，这时收到一个暂停请求，暂停点是NPT21，那么它将会开始播放第二个范围，并且在NPT21处停止。如果服务器正在服务第一个请求播放到NPT13位置，收到暂停请求，暂停点NPT12，那么它将立即停止。如果请求在NPT16暂停，那么服务器在完成第一个播放请求后停止，放弃了第二个播放请求。
+    再如，服务器收到播放请求，播放范围从10到15和13到20（即之间有重叠），PAUSE暂停点是NPT14，则当服务器播放第一段范围时，PAUSE请求将生效，而第二个PLAY请求会被忽略重叠部分，就好像服务器在开始播放第二段前收到PAUSE请求。不管PAUSE请求何时到达，它总是设置NPT到14。
+    如果服务器已经在Range首部域指定的时间外发送了数据，后继的PLAY仍会在暂停点及时重启，因为它认为客户端会丢弃在暂停点后收到的数据。这就确保了连续、无隙的暂停/播放循环。
+  (6)RECORD方法
+    此方法根据表示描述开始记录媒体数据。时间戳（timestamp）表现了起始和结束时间（UTC）。如果没有给定时间范围，就使用表示描述中提供的开始和结束时间。如果会话已经开启，立即开始记录。由服务器来决定是否存储记录的数据到请求URI下或者其它URI下。如果服务器没有使用请求URI，那么响应代码应该是201（创建），并且包含一个实体，该实体描述了请求的状态，并通过Location首部域指向新资源。
+    允许记录现场表示（live presentations）的媒体服务器必须支持时钟范围格式（the clock range format），smpte格式对此无用。
+  (7)TEARDOWN方法
+    TEARDOWN请求终止了给定URI的媒体流传输，并释放了与该媒体流相关的资源。
+    如果该URI是对此表示的表示URI，那么任何与此会话相关的任何RTSP会话标志符将不再有效。除非所有传输参数由会话描述符定义，否则SETUP请求必须在会话能被再次播放之前发出。
+  (8)ANNOUNCE方法
+    a.当客户端向服务器发送时，ANNOUNCE将通过请求URL识别的表示描述或者媒体对象提交给服务器；
+    b.当服务器向客户端发送时，ANNOUNCE实时更新会话描述。
+  (9)REDIRECT方法
+    REDIRECT请求告知客户端连接到另一个服务器位置。它包含首部域Location，该域指出了客户端应该发出请求的URL。
+    REDIRECT请求可能包含参数Range，在重定向生效时，该域指明了媒体流的范围。
+    如果客户端希望继续发送或接收其URI指定的媒体，它必须发出一个TEARDOWN请求来关闭当前会话，并向委派的主机发送SETUP以建立新的会话。
+  (10)GET_PARAMETER
+    GET_PARAMETER请求检索URI指定的表示或媒体流的参数值。
+    答复和响应的内容留给了实现。
+    不带实体主体的GET_PARAMETER可用来测试客户端或服务器是否存活（"Ping"）
+  (11)SET_PARAMETER
+    此方法给URI指定的表示或媒体流设置参数值。
+    帮助客户端检查某个特殊的请求为何失败的请求应该只附带一个参数。
+    当请求附带多个参数时，服务器只有在这些参数全都设置正确时才作出响应。
+    服务器必须允许某个参数被重复设置成相同的值，但可能不允许改变参数值。
+    注意：传输参数必须只能使用SETUP命令来设置。
+7.RTSP状态机
+  下面几个方法在定义服务器上媒体流资源的分配和使用时，有重要作用：SETUP, PLAY, RECORD, PAUSE, 和TEARDOWN。
+    SETUP：使服务器为媒体流和启动一个RTSP会话分配资源。
+    PLAY和RECORD：开始在媒体流（通过SETUP分配）上传送数据
+    PAUSE：暂时中断某个媒体流，但没有释放服务器资源
+    TEARDOWN：释放与媒体流相关的资源。RTSP会话终止，在服务器退出。
+  影响RTSP状态的方法使用会话首部域（Session header field）来标识状态正在被操作的会话。服务器在响应SETUP请求时，产生会话标志符。
+  (1)客户端状态机
+    初始态（Init）：SETUP请求已经发出，等待回复
+    就绪态（Ready）：收到SETUP回复，或在播放态时收到PAUSE回复
+    播放态（Playing）：收到PLAY回复
+    记录态（Recording）：收到RECORD回复
+    --------------------------------------
+    状态  	发出的消息 	响应后下一状态 
+    初始态 	SETUP 	    就绪态 
+  	        TEARDOWN 	初始态 
+    就绪态 	PLAY 	    播放态 
+  	        RECORD 	    记录态 
+  	        TEARDOWN 	初始态 
+  	        SETUP 	    就绪态 
+    播放态 	PAUSE 	    就绪态 
+  	        TEARDOWN 	初始态 
+  	        PLAY 	    播放态 
+  	        SETUP 	    播放态（改变传输） 
+    记录态 	PAUSE 	    就绪态 
+  	        TEARDOWN 	初始态 
+  	        RECORD 	    记录态 
+  	        SETUP 	    记录态（改变传输）
+    --------------------------------------
+  (2)服务器端状态机
+    初始态（Init）：最初的状态，未收到有效的SETUP请求
+    就绪态（Ready）：成功接收上一个SETUP请求，回复发出，或者从播放态迁移而来，成功接收上一个PAUSE请求，向客户端发回回复
+    播放态（Playing）：成功接收上一个PLAY请求，对其回复发出。数据正在发送
+    记录态（Recording）：服务器正在记录媒体数据
+    -----------------------------
+    状态 	收到的消息 	下一状态 
+    初始态 	SETUP 	    就绪态 
+  	        TEARDOWN 	初始态 
+    就绪态 	PLAY 	    播放态 
+  	        SETUP 	    就绪态 
+  	        TEARDOWN 	初始态 
+  	        RECORD 	    记录态 
+    播放态 	PLAY 	    播放态 
+  	        PAUSE 	    就绪态 
+  	        TEARDOWN 	初始态 
+  	        SETUP 	    播放态 
+    记录态 	RECORD 	    记录态 
+  	        PAUSE 	    就绪态 
+  	        TEARDOWN 	初始态 
+  	        SETUP 	    记录态
+    -----------------------------
+--------------------------------------------------------------------------------------
+  
+参考学习文件：
+1.RTSP协议简介.ppt
+2.https://www.cnblogs.com/lidabo/p/6553212.html
+3.RFC2326.txt
