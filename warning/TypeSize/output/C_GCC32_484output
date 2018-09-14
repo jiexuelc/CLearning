@@ -1,0 +1,45 @@
+    -----------------------------    
+****在32位系统上,各类型占用字节数****
+****      GCC Version: 4.8.4     ****
+    -----------------------------    
+-------------基本类型----------------
+char: 1
+unsigned char: 1
+short: 2
+unsigned short: 2
+int: 4
+unsigned int: 4
+float: 4
+double: 8
+long: 4
+unsigned long: 4
+long long: 8
+---------枚举、结构、联合------------
+enum: 4
+struct person8: 32
+struct person4: 12
+struct person2: 6
+struct person1: 1
+union IPV4: 4
+--------指针、函数、函数指针---------
+char*: 4
+int*: 4
+long long*: 4
+double*: 4
+main: 1
+function: 1
+&main: 4
+&function: 4
+main(): 4
+function*: 4
+---------------字符串----------------
+str1[] = "12345\0678": 7
+str1[] = "12345\0678": 8
+str2[] = "12345\\0678": 10
+str2[] = "12345\\0678": 11
+char ArryNames[9][8]: 72
+char ArryNames[9][8]: 3
+char* names[9]: 36
+------------修改对齐方式-------------
+struct Pragma_2: 16
+struct Pragma_1: 10
