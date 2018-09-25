@@ -4,6 +4,8 @@
 	> Mail: jiexuelc@163.com
 	> Created Time: Tue 25 Sep 2018 02:23:28 PM CST
 	> Description: 函数指针运用
+            注意：int * p (char)    p是一个函数，返回类型是int*;
+                 int (* p) (char)  p是一个指针，指向一个函数
  ************************************************************************/
 
 #include <stdio.h>
