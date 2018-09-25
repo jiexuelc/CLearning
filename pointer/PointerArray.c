@@ -4,6 +4,8 @@
 	> Mail: jiexuelc@163.com
 	> Created Time: Tue 25 Sep 2018 10:57:26 AM CST
 	> Description: 指针与数组
+                注意：int * p[5]    p是一个数组，每个元素是int*;
+                     int (* p)[5]  p是一个指针，指向一个数组的指针，指向int [5]数组；
  ************************************************************************/
 
 #include <stdio.h>
