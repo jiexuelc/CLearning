@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
     {
         printf("输入参数错误！\n");
         printf("Usage:read_output <filename>\n");
+        return 0;
     }
     
     if(-1 == (fd = open(argv[1], O_RDONLY)))
