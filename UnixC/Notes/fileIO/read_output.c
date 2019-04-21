@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
         printf("打开文件出错！\n");
     }
     
+    //循环读取，循环输出
     while(RetVal = read(fd, buf, sizeof(buf) / sizeof(char)))
     {
         if(0 == RetVal)
@@ -43,6 +44,11 @@ int main(int argc, char* argv[])
             snprintf(str, RetVal + 1, "%s", buf);
             printf("%s", str);
         }
+    }
+    
+    if(-1 == close(fd))
+    {
+        printf("关闭文件失败！\n");
     }
     
     return 0;
