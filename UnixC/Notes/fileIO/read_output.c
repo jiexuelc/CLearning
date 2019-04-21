@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     {
         if(0 == RetVal)
         {
-            return 0;
+            break;
         }
         else if(-1 == RetVal) 
         {
