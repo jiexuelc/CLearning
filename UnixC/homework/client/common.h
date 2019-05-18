@@ -61,6 +61,7 @@ char             *g_pszTransBuf;        //发送或接收缓存
 char              szAckBuf[ACK_SIZE];   //应答缓存
 /* 全局变量定义区 */
 
+char *gets_s(char *str, size_t num, FILE *stream);
 bool IsExist(stServerNode *pHead, char* pIP);
 void AddNode(stServerNode *pHead, char *pIP, uint16_t usiPort);
 stServerNode *FindNode(stServerNode *pHead, uint16_t iNum);

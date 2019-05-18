@@ -23,6 +23,24 @@
 #include "common.h"
 
  /**@fn 
+ *  @brief  带'\0'且丢掉'\n'的字符串获取函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 成功返回字符串地址，失败返回空
+ */
+char *gets_s(char *str, size_t num, FILE *stream)
+{
+    if (0 != fgets(str, num, stream))
+    {
+        size_t len = strlen(str);
+        if (len > 0 && str[len-1] == '\n')
+            str[len-1] = '\0';
+        return str;
+    }
+    return 0;
+}
+
+ /**@fn 
  *  @brief  检测链表中是否存在该IP信息
  *  @param c 参数描述
  *  @param n 参数描述

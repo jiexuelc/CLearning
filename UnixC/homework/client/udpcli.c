@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -70,11 +71,11 @@ void UDPService(stServerNode *pstServer)
     {
         PrintWorkDir(); //打印当前工作目录
         printf("请输入需要查看的目录绝对路径: ");
-        gets(pszPath);  //获取输入目录
+        gets_s(pszPath, PATH_MAX, stdin);  //获取输入目录
         PrintDirFile(pszPath);  //输出输入目录下的文件及目录
         
         printf("输入需要上传的文件名:\n");
-        gets(g_pstComTransInfo->szFilename);   //获取上传文件名
+        gets_s(g_pstComTransInfo->szFilename, NAME_MAX, stdin);   //获取上传文件名
         strncat(pszPath, "/", 1);
         strncat(pszPath, g_pstComTransInfo->szFilename, sizeof(g_pstComTransInfo->szFilename));
         printf("文件绝对路径: %s\n", pszPath);

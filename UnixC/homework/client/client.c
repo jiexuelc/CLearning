@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -39,7 +40,7 @@ void *CountTime(void *arg)
     timeout = true;
 }
 
-uint16_t ServerSearch(stServerNode *pHead)
+int16_t ServerSearch(stServerNode *pHead)
 {
     int sockfd;
     struct sockaddr_in stMcastAddr, stServerAddr;
@@ -57,7 +58,7 @@ uint16_t ServerSearch(stServerNode *pHead)
     if (-1 == sockfd)
     { 
         fprintf(stderr, "%s\n",strerror(errno));
-        return;
+        return -1;
     }
     
     /* 填充多播地址 */
@@ -73,7 +74,7 @@ uint16_t ServerSearch(stServerNode *pHead)
         if(0 > iRet)
         {
             fprintf(stderr, "%s\n",strerror(errno));
-            return;
+            return -1;
         }
         else
         {
@@ -171,7 +172,7 @@ int main(int argc, char* argv[])
     if(NULL == g_pszTransBuf)
     {
         printf("内存申请失败！\n");
-        return;
+        return 1;
     }
 
     /* 全局变量内存初始化 */
