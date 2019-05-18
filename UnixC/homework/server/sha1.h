@@ -70,6 +70,6 @@ int SHA1Input(  SHA1Context *,
                 unsigned int);
 int SHA1Result( SHA1Context *,
                 uint8_t Message_Digest[SHA1HashSize]);
-int SHA1File (const char *filename, char *pszSha1Digest);
+int SHA1File(const char *filename, char *pszSha1Digest);
 
 #endif

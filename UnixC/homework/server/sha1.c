@@ -392,7 +392,7 @@ void SHA1PadMessage(SHA1Context *context)
 
 /* Digests a file and prints the result.
  */
-int SHA1File (const char *filename, char *pszSha1Digest)
+int SHA1File(const char *filename, char *pszSha1Digest)
 {
     FILE *file;
     SHA1Context sha;

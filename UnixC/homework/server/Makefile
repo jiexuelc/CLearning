@@ -7,7 +7,7 @@ all: server
 
 
 server: common.o server.o sha1.o
-	$(CC) common.o server.o tcpcli.o sha1.o udpcli.o -o server $(LFLAG)
+	$(CC) common.o server.o sha1.o -o server $(LFLAG)
 server.o: server.c
 	$(CC) -c server.c $(LFLAG)
 sha1.o: sha1.c

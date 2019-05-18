@@ -26,6 +26,7 @@
 #include <sys/select.h>
 
 #include "common.h"
+#include "sha1.h"
 
 #define MCAST_PORT 10365
 #define MCAST_ADDR "224.0.0.66" /*一个局部连接多播地址，路由器不进行转发*/
