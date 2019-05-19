@@ -29,17 +29,17 @@
 
 typedef enum    //传输标志
 {
-    TRANS_REQ       =  0,  /**< 请求*/
-    TRANS_OK        =  1,  /**< 成功*/
-    TRANS_ERROR     =  2,  /**< 失败*/
-    TRANS_AGAIN     =  3,  /**< 重传*/
-    TRANS_ACK       =  4   /**< 确认*/
+    TRANS_REQ       =  1,  /**< 请求*/
+    TRANS_OK        =  2,  /**< 成功*/
+    TRANS_ERROR     =  3,  /**< 失败*/
+    TRANS_AGAIN     =  4,  /**< 重传*/
+    TRANS_ACK       =  5   /**< 确认*/
 }TRANS_FLAG_E;
 
 typedef enum    //传送状态
 {
-    TRANS_UPLOAD    =  0,  /**< 上传*/
-    TRANS_DOWNLOAD  =  1,  /**< 下载*/
+    TRANS_UPLOAD    =  1,  /**< 上传*/
+    TRANS_DOWNLOAD  =  2,  /**< 下载*/
     TRANS_VIEW_LIST =  3   /**< 查看服务端文件列表*/
 }TRANS_STATE_E;
 

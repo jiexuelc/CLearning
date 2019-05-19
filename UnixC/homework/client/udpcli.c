@@ -112,6 +112,9 @@ void UDPService(stServerNode *pstServer)
     /* 下载操作 */
     else
     {
+        //查看远端服务器文件
+        //选择下载文件
+        //接收文件内容
         ;
     }
 }
@@ -165,4 +168,15 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
     printf("File:%s Transfer Successful!\n", pszPath); 
 
     close(ifd);
+}
+
+ /**@fn 
+ *  @brief  UDP接收文件服务
+ *  @param c 参数描述.
+ *  @param n 参数描述.
+ *  @return 返回描述
+ */
+void UDPRcvFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr)
+{
+
 }

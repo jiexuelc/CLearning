@@ -16,5 +16,6 @@
 
 void UDPService(stServerNode *pstServer);
 void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr);
+void UDPRcvFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr);
 
 #endif

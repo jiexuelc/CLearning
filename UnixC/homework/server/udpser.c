@@ -107,7 +107,7 @@ void *UDPService(void *arg)
         }
     }
 
-    /*退出多播组*/
+    /*退出多播组, 退出服务器发现状态*/
     iErrno = setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &stMreq, sizeof(stMreq));
  
     /* 循环接收消息 */
@@ -130,10 +130,48 @@ void *UDPService(void *arg)
         sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
     }
 
+    switch (g_pstComTransInfo->enTransState)
+    {
+        case TRANS_UPLOAD:
+        {
+            UDPRcvFile(sockfd, &stClientAddr, iLenClientAddr);
+            break;
+        }
+        case TRANS_DOWNLOAD:
+        {
+            break;
+        }
+        case TRANS_VIEW_LIST:
+        {
+            //接收查看目录路径
+            //读取文件目录并发送
+            break;
+        }
+        default:
+        {
+            break;
+        }
+
+    }
+
+
+
+    close(sockfd);
+}
+
+ /**@fn 
+ *  @brief  文件接收函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 成功返回字符串地址，失败返回空
+ */
+void UDPRcvFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenClientAddr)
+{
     fd_set stReadFd;
     struct timeval sttv = {0, 0};
     int ifd;
     int i = 0;  //用于超时计时
+    int iRet;   //用于存储返回值
     ifd = open(g_pstComTransInfo->szFilename, O_RDWR | O_CREAT, 0664);
     if(-1 == ifd)
     {
@@ -152,7 +190,7 @@ void *UDPService(void *arg)
         if(FD_ISSET(sockfd, &stReadFd))
         {
             i = 0;  //超时时间内收到数据重新计数
-            iRet = recvfrom(sockfd, (char*)g_pszTransBuf, BUFFER_SIZE, 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
+            iRet = recvfrom(sockfd, (char*)g_pszTransBuf, BUFFER_SIZE, 0, (struct sockaddr*)pstClientAddr, &iLenClientAddr);
             if(-1 == iRet)
             {
                 fprintf(stderr, "%s\n",strerror(errno));
@@ -166,13 +204,13 @@ void *UDPService(void *arg)
             }
             
             //发送响应
-            iRet = sendto(sockfd, "ok", 2, 0, (struct sockaddr*)&stClientAddr, iLenClientAddr);
+            iRet = sendto(sockfd, "ok", 2, 0, (struct sockaddr*)pstClientAddr, iLenClientAddr);
             if(-1 == iRet)
             {
                 fprintf(stderr, "%s\n",strerror(errno));
                 return;
             }
-            //sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
+            //sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)pstClientAddr, iLenClientAddr);
         }
         else
         {
@@ -192,7 +230,15 @@ void *UDPService(void *arg)
     {
         printf("SHA1相同，文件传输正常\n");
     }
-
-    close(sockfd);
 }
 
+ /**@fn 
+ *  @brief  文件发送函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 成功返回字符串地址，失败返回空
+ */
+void UDPSendFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenClientAddr)
+{
+
+}
