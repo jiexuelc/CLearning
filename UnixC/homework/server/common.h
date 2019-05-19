@@ -21,6 +21,9 @@
 #define COM_SHA1DIGEST_LEN  41      //摘要认证字符串最大长度
 #define BUFFER_SIZE         1024    //发送或接收数据缓存大小
 #define ACK_SIZE            4       //应答缓存大小
+#define MCAST_PORT 10365
+#define MCAST_ADDR "224.0.0.66"     /*一个局部连接多播地址，路由器不进行转发*/
+#define BUFF_SIZE 256               //接收缓冲区大小
 
 
 
@@ -63,6 +66,7 @@ char                *g_pszPath;               //目录缓存
 char                *g_pszSha1Digest;         //用于存储计算接收后文件的摘要
 /* 全局变量定义区 */
 
+char *gets_s(char *str, size_t num, FILE *stream);
 bool IsExist(stServerNode *pHead, char* pIP);
 void AddNode(stServerNode *pHead, char *pIP, uint16_t usiPort);
 stServerNode *FindNode(stServerNode *pHead, uint16_t iNum);
