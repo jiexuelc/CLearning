@@ -14,5 +14,7 @@
 #define _TCPCLI_H 1
 
 void TCPService(stServerNode *pstServer);
+void TCPSendFile(int iSockfd, char *pszPath);
+void TCPRcvFile(int sockfd);
 
 #endif

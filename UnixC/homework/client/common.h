@@ -18,6 +18,10 @@
 #include <limits.h>
 #include <stdbool.h>
 
+#define MCAST_PORT  30365
+#define TCP_PORT    30366           //TCP服务端口
+#define MCAST_ADDR "224.0.0.66"     // 多播地址
+#define MCAST_DATA "build"          // 多播内容
 #define COM_SHA1DIGEST_LEN  41      //摘要认证字符串最大长度
 #define BUFFER_SIZE         1024    //发送或接收数据缓存大小
 #define ACK_SIZE            4       //应答缓存大小

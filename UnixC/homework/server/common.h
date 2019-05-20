@@ -23,7 +23,8 @@
 #define COM_SHA1DIGEST_LEN  41      //摘要认证字符串最大长度
 #define BUFFER_SIZE         1024    //发送或接收数据缓存大小
 #define ACK_SIZE            4       //应答缓存大小
-#define MCAST_PORT 30365
+#define MCAST_PORT  30365           //UDP服务端口
+#define TCP_PORT    30366           //TCP服务端口
 #define MCAST_ADDR "224.0.0.66"     /*一个局部连接多播地址，路由器不进行转发*/
 #define BUFF_SIZE 256               //接收缓冲区大小
 
@@ -78,6 +79,7 @@ void ProtocolMenu(void);
 void OperateMenu(void);
 void PrintWorkDir(void);
 void PrintDirFile(const char* pszDir);
-void SendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr);
+void UDPSendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr);
+void TCPSendDirList(const char* pszDir, int sockfd);
 
 #endif

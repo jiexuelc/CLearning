@@ -25,9 +25,7 @@
 #include "tcpcli.h"
 #include "udpcli.h"
 
-#define MCAST_PORT 30365
-#define MCAST_ADDR "224.0.0.66"  // 多播地址
-#define MCAST_DATA "build"  // 多播内容
+
 
 volatile bool timeout = false;
 

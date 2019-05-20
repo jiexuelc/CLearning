@@ -237,7 +237,7 @@ void PrintWorkDir(void)
  *  @param n 参数描述
  *  @return 返回描述
  */
-void SendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr)
+void UDPSendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr)
 {
     char szFileName[NAME_MAX];
     if(NULL == pszDir)
@@ -277,6 +277,56 @@ void SendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAd
     }
     //printf("*******目录文件列表*******\n");
     sendto(sockfd, "**", 2, 0, (struct sockaddr*)pstClientAddr, iLenClientAddr);    //文件目录传输结束标志
+
+    closedir(dp);
+}
+
+ /**@fn 
+ *  @brief  发送指定目录文件列表
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 返回描述
+ */
+void TCPSendDirList(const char* pszDir, int sockfd)
+{
+    char szFileName[NAME_MAX];
+    if(NULL == pszDir)
+    {
+        printf("请检查，传入参数错误！\n");
+        return;
+    }
+
+    struct dirent* pstdir;
+    DIR *dp = opendir(pszDir);
+    if (NULL == dp)
+    {
+        fprintf(stderr, "%s\n",strerror(errno));
+        return;
+    }
+
+    //printf("该目录文件列表如下:\n");
+    //printf("*******目录文件列表*******\n");
+    for (pstdir = readdir(dp); pstdir; pstdir = readdir(dp))
+    {
+        /* 不是目录文件直接输出 */
+        if (DT_DIR != pstdir->d_type)
+        {
+            sprintf(szFileName, "%s", pstdir->d_name);
+        }
+        /* 不输出. 和..目录文件 */
+        else
+        {
+            if ((0 != strncmp(pstdir->d_name, ".", 1))
+                && (0 != strncmp(pstdir->d_name, "..", 2)))
+            {
+                sprintf (szFileName, "./%s", pstdir->d_name);
+            }
+        }
+        //printf ("%s\n", szFileName);
+        send(sockfd, szFileName, NAME_MAX, 0);
+    }
+    //printf("*******目录文件列表*******\n");
+    send(sockfd, "**", 2, 0);    //文件目录传输结束标志
 
     closedir(dp);
 }

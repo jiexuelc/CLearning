@@ -28,6 +28,7 @@
 #include "common.h"
 #include "sha1.h"
 #include "udpser.h"
+#include "tcpser.h"
 
 
 //全局资源申请
@@ -91,27 +92,87 @@ int main()
     struct sockaddr_in stClientAddr;
     struct sockaddr_in stServerAddr;
     char szClientAddr[INET_ADDRSTRLEN];
-    socklen_t iLenClientAddr = sizeof(stClientAddr);
+    pthread_t UDPtid;   //UDP线程标识
+    pthread_t TCPtid;   //TCP线程标识
+    int iCliSockFd;
+    int iSerSockFd;
+    int iCliAddrLen = sizeof(stClientAddr);
+
 
     GlobalMemMalloc(); //全局资源申请
 
+    memset(&stClientAddr, 0, sizeof(stClientAddr));
     memset(&stServerAddr, 0, sizeof(stServerAddr));
     getcwd(g_pszPath, PATH_MAX);    //获取当前工作目录
     printf("Working Path: %s\n", g_pszPath);
 
+
     /* 创建UDP服务线程 */
-    pthread_t UDPtid;
     if(-1 == pthread_create(&UDPtid, NULL, UDPService, NULL))
     {
         fprintf(stderr, "%s\n",strerror(errno));
-        return -1;
+        return 1;
     }
     pthread_detach(UDPtid);   //分离线程
+
+
+    /* TCP服务 */
+    stServerAddr.sin_family = AF_INET;
+    stServerAddr.sin_addr.s_addr = INADDR_ANY;
+    stServerAddr.sin_port = htons(TCP_PORT);
+    if(-1 == (iSerSockFd = socket(AF_INET, SOCK_STREAM, 0)))
+    {
+        fprintf(stderr, "%s\n",strerror(errno));
+        return 1;
+    }
+
+    #if 0
+    int iOptVal = 1;
+    if (-1 == setsockopt(iSerSockFd, SOL_SOCKET, SO_REUSEADDR, &iOptVal, sizeof(iOptVal))) 
+    {
+        fprintf(stderr, "%s\n", strerror(errno));
+        close(iSerSockFd);
+        return;
+    }
+    printf("1\n");
+    #endif
     
+    if(-1 == bind(iSerSockFd, (struct sockaddr*) &stServerAddr, sizeof(stServerAddr)))
+    {
+        fprintf(stderr, "%s\n", strerror(errno));
+        return 1;
+    }
+
+    printf("2\n");
+
+    if(-1 == listen(iSerSockFd, 16))
+    {
+        fprintf(stderr, "%s\n", strerror(errno));
+        return 1;
+    }
+
+    printf("3\n");
 
     while (1)
     {
+        if(-1 == (iCliSockFd = accept(iSerSockFd, (struct sockaddr *) &stClientAddr, &iCliAddrLen)))
+        {
+            fprintf(stderr, "%s\n", strerror(errno));
+            return 1;
+        }
+        printf("iCliSockFd = %d\n", iCliSockFd);
+        inet_ntop(AF_INET, &stClientAddr.sin_addr, szClientAddr, sizeof(szClientAddr));
+        printf("TCP Client: %s: port is %d\n", szClientAddr, ntohs(stClientAddr.sin_port));
+        /* 创建线程为其服务 */
+        if(-1 == pthread_create(&TCPtid, NULL, TCPService, (void *)&iCliSockFd))
+        {
+            fprintf(stderr, "%s\n",strerror(errno));
+            return 1;
+        }
+        pthread_detach(TCPtid);   //线程分离
+
         sleep(1);
+        continue;
     }
     
     GlobalMemFree();
