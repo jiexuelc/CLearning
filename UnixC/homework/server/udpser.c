@@ -113,48 +113,64 @@ void *UDPService(void *arg)
     /* 循环接收消息 */
     //while (1)
     {
-
-        iRet = recvfrom(sockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
+        iRet = recvfrom(sockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
         if(-1 == iRet)
         {
             fprintf(stderr, "%s\n",strerror(errno));
             return;
         }
         
-        /*打印服务器收到的多播信息*/
-        printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
-        printf("FileName: %s\n", g_pstComTransInfo->szFilename);
-        printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
-        printf("enTransState: %d\n", g_pstComTransInfo->enTransState);
+        /*打印服务器收到的传输标志信息*/
+        printf("g_enTransState: %d\n", g_enTransState);
 
         sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
+
+        switch (g_enTransState)
+        {
+            case TRANS_UPLOAD:
+            {
+                printf("接收文件中...\n");
+                iRet = recvfrom(sockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
+                if(-1 == iRet)
+                {
+                    fprintf(stderr, "%s\n",strerror(errno));
+                    return;
+                }
+                else
+                {
+                    /* 发送本次接收应答 */
+                    sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
+                }
+                
+                /*打印服务器收到的多播信息*/
+                printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
+                printf("FileName: %s\n", g_pstComTransInfo->szFilename);
+                printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+
+                sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
+            
+                UDPRcvFile(sockfd, &stClientAddr, iLenClientAddr);
+                break;
+            }
+            case TRANS_DOWNLOAD:
+            {
+                printf("向客户端传输文件中...\n");
+                break;
+            }
+            case TRANS_VIEW_LIST:
+            {
+                printf("查看本地文件中...\n");
+                //接收查看目录路径
+                //读取文件目录并发送
+                break;
+            }
+            default:
+            {
+                break;
+            }
+
+        }
     }
-
-    switch (g_pstComTransInfo->enTransState)
-    {
-        case TRANS_UPLOAD:
-        {
-            UDPRcvFile(sockfd, &stClientAddr, iLenClientAddr);
-            break;
-        }
-        case TRANS_DOWNLOAD:
-        {
-            break;
-        }
-        case TRANS_VIEW_LIST:
-        {
-            //接收查看目录路径
-            //读取文件目录并发送
-            break;
-        }
-        default:
-        {
-            break;
-        }
-
-    }
-
-
 
     close(sockfd);
 }

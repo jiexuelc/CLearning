@@ -39,6 +39,7 @@ void UDPService(stServerNode *pstServer)
     assert(pstServer != NULL);
 
     struct sockaddr_in stServerAddr;
+    socklen_t uliSerAddrLen = sizeof(stServerAddr);
     int iSockfd;
     int iRet = 0;
     char cBuf;//临时变量，清输入缓存用
@@ -69,6 +70,27 @@ void UDPService(stServerNode *pstServer)
     /* 上传操作 */
     if (1 == usiNum)
     {
+        g_enTransState = TRANS_UPLOAD;   //置为上传状态
+        iRet = sendto(iSockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen);
+        if(-1 == iRet) 
+        {  
+            fprintf(stderr, "%s\n",strerror(errno));
+            return;
+        }
+        else
+        {
+            /* 接收本次发送应答 */
+            if((recvfrom(iSockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen)) < 0)          
+            {            
+                fprintf(stderr, "%s\n", strerror(errno));
+                return;
+            }
+            if(0 == strncmp(g_szAckBuf, "ok", 2))
+            {
+                printf("服务器已准备接收文件\n");
+            }
+        }
+
         PrintWorkDir(); //打印当前工作目录
         printf("请输入需要查看的目录绝对路径: ");
         gets_s(pszPath, PATH_MAX, stdin);  //获取输入目录
@@ -84,11 +106,11 @@ void UDPService(stServerNode *pstServer)
         SHA1File(g_pstComTransInfo->szFilename, g_pstComTransInfo->szSHA1);
         printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1);
 
-        g_pstComTransInfo->enTransState = TRANS_UPLOAD;   //置为上传状态
-        g_pstComTransInfo->enTransFlag = TRANS_REQ;
+        
+        g_pstComTransInfo->enTransFlag = TRANS_REQ;         //置为上传请求
 
         /* 发送文件相关信息 */
-        iRet = sendto(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr *)&stServerAddr, sizeof(stServerAddr));
+        iRet = sendto(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen);
         if(-1 == iRet) 
         {  
             fprintf(stderr, "%s\n",strerror(errno));
@@ -96,7 +118,17 @@ void UDPService(stServerNode *pstServer)
         }
         else
         {
-            printf("发送%d字节消息\n", iRet);
+            /* 接收本次发送应答 */
+            if((recvfrom(iSockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen)) < 0)          
+            {            
+                fprintf(stderr, "%s\n", strerror(errno));
+                return;
+            }
+            if(0 == strncmp(g_szAckBuf, "ok", 2))
+            {
+                printf("服务器已准备接收文件\n");
+            }
+            printf("服务器已接收到%d字节文件相关信息\n", iRet);
         }
 
         UDPSendFile(iSockfd, pszPath, &stServerAddr);
@@ -153,12 +185,12 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
         }
 
         /* 接收本次发送应答 */
-        if((recvfrom(iSockfd, szAckBuf, ACK_SIZE, 0, (struct sockaddr*)pstServerAddr, &uliAddrLen)) < 0)          
+        if((recvfrom(iSockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)pstServerAddr, &uliAddrLen)) < 0)          
         {            
             fprintf(stderr, "%s\n", strerror(errno));
             break;
         }
-        if(0 == strncmp(szAckBuf, "ok", 2))
+        if(0 == strncmp(g_szAckBuf, "ok", 2))
         {
             printf("发送%d字节消息成功\n", iRet);
         }

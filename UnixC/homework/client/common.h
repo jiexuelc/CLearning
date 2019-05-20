@@ -47,18 +47,18 @@ typedef struct ServerInfo{
    struct ServerInfo *pstNext;
 }stServerNode;
 
-typedef struct tagComTransInfo   //传输信息结构
+typedef struct tagComTransInfo   //传输文件信息结构
 {
-    char    szSHA1[COM_SHA1DIGEST_LEN];
-    char    szFilename[NAME_MAX];
-    TRANS_FLAG_E    enTransFlag;
-    TRANS_STATE_E   enTransState;
+    char            szSHA1[COM_SHA1DIGEST_LEN]; //文件摘要信息
+    char            szFilename[NAME_MAX];       //文件名
+    TRANS_FLAG_E    enTransFlag;                //传输标志
 }COM_TRANS_INFO_S;
 
 /* 全局变量定义区 */
-COM_TRANS_INFO_S *g_pstComTransInfo;    //保存文件信息结构
-char             *g_pszTransBuf;        //发送或接收缓存
-char              szAckBuf[ACK_SIZE];   //应答缓存
+TRANS_STATE_E       g_enTransState;         //传输状态
+COM_TRANS_INFO_S    *g_pstComTransInfo;     //保存文件信息结构
+char                *g_pszTransBuf;         //发送或接收缓存
+char                g_szAckBuf[ACK_SIZE];   //接收应答缓存
 /* 全局变量定义区 */
 
 char *gets_s(char *str, size_t num, FILE *stream);
