@@ -12,10 +12,9 @@
 
 #ifndef _UDPCLI_H
 #define _UDPCLI_H 1
-#include "common.h"
 
 void UDPService(stServerNode *pstServer);
 void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr);
-void UDPRcvFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr);
+void UDPRcvFile(int sockfd, struct sockaddr_in *pstServerAddr, socklen_t uliSerAddrLen);
 
 #endif

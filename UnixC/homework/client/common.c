@@ -20,7 +20,16 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+
 #include "common.h"
+
+/* 全局变量定义区 */
+TRANS_STATE_E       g_enTransState;                 //传输状态
+COM_TRANS_INFO_S    *g_pstComTransInfo  = NULL;     //保存文件信息结构
+char                *g_pszTransBuf      = NULL;     //发送或接收缓存
+char                g_szAckBuf[ACK_SIZE];           //接收应答缓存
+char                *g_pszSha1Digest    = NULL;     //用于存储计算接收后文件的摘要
+/* 全局变量定义区 */
 
  /**@fn 
  *  @brief  带'\0'且丢掉'\n'的字符串获取函数

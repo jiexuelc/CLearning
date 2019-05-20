@@ -23,7 +23,6 @@
 #define ACK_SIZE            4       //应答缓存大小
 
 
-
 typedef enum    //传输标志
 {
     TRANS_REQ       =  1,  /**< 请求*/
@@ -54,12 +53,15 @@ typedef struct tagComTransInfo   //传输文件信息结构
     TRANS_FLAG_E    enTransFlag;                //传输标志
 }COM_TRANS_INFO_S;
 
-/* 全局变量定义区 */
-TRANS_STATE_E       g_enTransState;         //传输状态
-COM_TRANS_INFO_S    *g_pstComTransInfo;     //保存文件信息结构
-char                *g_pszTransBuf;         //发送或接收缓存
-char                g_szAckBuf[ACK_SIZE];   //接收应答缓存
-/* 全局变量定义区 */
+
+/* 全局变量声明区 */
+extern TRANS_STATE_E       g_enTransState;         //传输状态
+extern COM_TRANS_INFO_S    *g_pstComTransInfo;     //保存文件信息结构
+extern char                *g_pszTransBuf;         //发送或接收缓存
+extern char                g_szAckBuf[ACK_SIZE];   //接收应答缓存
+extern char                *g_pszSha1Digest;       //用于存储计算接收后文件的摘要
+/* 全局变量声明区 */
+
 
 char *gets_s(char *str, size_t num, FILE *stream);
 bool IsExist(stServerNode *pHead, char* pIP);

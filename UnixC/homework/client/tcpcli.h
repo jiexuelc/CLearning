@@ -13,8 +13,6 @@
 #ifndef _TCPCLI_H
 #define _TCPCLI_H 1
 
-#include "common.h"
-
 void TCPService(stServerNode *pstServer);
 
 #endif

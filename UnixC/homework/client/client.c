@@ -25,7 +25,7 @@
 #include "tcpcli.h"
 #include "udpcli.h"
 
-#define MCAST_PORT 10365
+#define MCAST_PORT 30365
 #define MCAST_ADDR "224.0.0.66"  // 多播地址
 #define MCAST_DATA "build"  // 多播内容
 
@@ -175,9 +175,18 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    //用于存储计算接收后文件的摘要
+    g_pszSha1Digest = (char*)malloc(COM_SHA1DIGEST_LEN);
+    if(NULL == g_pszSha1Digest)
+    {
+        printf("内存申请失败！\n");
+        return 1;
+    }
+
     /* 全局变量内存初始化 */
     memset((void*)g_pstComTransInfo, 0, sizeof(COM_TRANS_INFO_S));
     memset(g_pszTransBuf, 0, BUFFER_SIZE);
+    memset(g_pszSha1Digest, 0, COM_SHA1DIGEST_LEN);
 
     ProtocolMenu();
     scanf("%hu", &usiNum);
@@ -195,6 +204,8 @@ int main(int argc, char* argv[])
     g_pstComTransInfo = NULL;
     free(g_pszTransBuf);
     g_pszTransBuf = NULL;
+    free(g_pszSha1Digest);
+    g_pszSha1Digest = NULL;
 
     return 0;
 }

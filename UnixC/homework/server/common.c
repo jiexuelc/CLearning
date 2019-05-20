@@ -20,7 +20,20 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 #include "common.h"
+
+
+/* 全局变量定义区 */
+TRANS_STATE_E       g_enTransState;                 //传输状态
+COM_TRANS_INFO_S    *g_pstComTransInfo  = NULL;     //保存文件信息结构
+char                *g_pszTransBuf      = NULL;     //发送或接收缓存
+char                g_szAckBuf[ACK_SIZE];           //接收应答缓存
+char                *g_pszPath          = NULL;     //目录缓存
+char                *g_pszSha1Digest    = NULL;     //用于存储计算接收后文件的摘要
+/* 全局变量定义区 */
 
 
  /**@fn 
@@ -219,13 +232,14 @@ void PrintWorkDir(void)
 }
 
  /**@fn 
- *  @brief  打印指定目录文件列表
+ *  @brief  发送指定目录文件列表
  *  @param c 参数描述
  *  @param n 参数描述
  *  @return 返回描述
  */
-void PrintDirFile(const char* pszDir)
+void SendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr)
 {
+    char szFileName[NAME_MAX];
     if(NULL == pszDir)
     {
         printf("请检查，传入参数错误！\n");
@@ -240,14 +254,14 @@ void PrintDirFile(const char* pszDir)
         return;
     }
 
-    printf("该目录文件列表如下:\n");
-    printf("*******目录文件列表*******\n");
+    //printf("该目录文件列表如下:\n");
+    //printf("*******目录文件列表*******\n");
     for (pstdir = readdir(dp); pstdir; pstdir = readdir(dp))
     {
         /* 不是目录文件直接输出 */
         if (DT_DIR != pstdir->d_type)
         {
-            printf ("%s\n", pstdir->d_name);
+            sprintf(szFileName, "%s", pstdir->d_name);
         }
         /* 不输出. 和..目录文件 */
         else
@@ -255,11 +269,14 @@ void PrintDirFile(const char* pszDir)
             if ((0 != strncmp(pstdir->d_name, ".", 1))
                 && (0 != strncmp(pstdir->d_name, "..", 2)))
             {
-                printf ("./%s/\n", pstdir->d_name);
+                sprintf (szFileName, "./%s", pstdir->d_name);
             }
         }
+        //printf ("%s\n", szFileName);
+        sendto(sockfd, szFileName, NAME_MAX, 0, (struct sockaddr*)pstClientAddr, iLenClientAddr);
     }
-    printf("*******目录文件列表*******\n");
+    //printf("*******目录文件列表*******\n");
+    sendto(sockfd, "**", 2, 0, (struct sockaddr*)pstClientAddr, iLenClientAddr);    //文件目录传输结束标志
 
     closedir(dp);
 }

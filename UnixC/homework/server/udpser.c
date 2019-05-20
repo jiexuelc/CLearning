@@ -111,8 +111,9 @@ void *UDPService(void *arg)
     iErrno = setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &stMreq, sizeof(stMreq));
  
     /* 循环接收消息 */
-    //while (1)
+    while (1)
     {
+        printf("等待接收传输状态...\n");
         iRet = recvfrom(sockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
         if(-1 == iRet)
         {
@@ -154,14 +155,56 @@ void *UDPService(void *arg)
             }
             case TRANS_DOWNLOAD:
             {
+                printf("查看本地文件中...\n");
+                printf("服务器工作目录%s\n", g_pszPath);
+                if(-1 == sendto(sockfd, g_pszPath, PATH_MAX,  0, (struct sockaddr *)&stClientAddr, iLenClientAddr))
+                {
+                    fprintf(stderr, "%s\n",strerror(errno));
+                    return;
+                }
+                else
+                {
+                    if(-1 == recvfrom(sockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr))
+                    {
+                        fprintf(stderr, "%s\n",strerror(errno));
+                        return;
+                    }
+                    else
+                    {
+                        strncmp(g_szAckBuf, "ok", 2);
+                        printf("本地目录发送成功！\n");
+                    }
+                }
+
+                //接收查看目录路径
+                recvfrom(sockfd, g_pszPath, PATH_MAX, 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
+                //读取文件目录并发送
+                SendDirList(g_pszPath, sockfd, &stClientAddr, iLenClientAddr);
+                //接收传输文件路径
+                recvfrom(sockfd, g_pszPath, PATH_MAX, 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
+
+                /* 向客户端传输文件 */
                 printf("向客户端传输文件中...\n");
+                /* 传输之前获取文件SHA1值 */
+                SHA1File(g_pszPath, g_pstComTransInfo->szSHA1);         //存储SHA1摘要
+                printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1); 
+                char *tmp = strrchr(g_pszPath, '/');
+                tmp++;
+                snprintf(g_pstComTransInfo->szFilename, NAME_MAX, "%s", tmp);//存储文件名
+
+                /* 发送文件相关信息 */
+                if(-1 == sendto(sockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr *)&stClientAddr, iLenClientAddr)) 
+                {  
+                    fprintf(stderr, "%s\n",strerror(errno));
+                    return;
+                }
+
+                UDPSendFile(sockfd, &stClientAddr, iLenClientAddr, g_pszPath);
+
                 break;
             }
             case TRANS_VIEW_LIST:
             {
-                printf("查看本地文件中...\n");
-                //接收查看目录路径
-                //读取文件目录并发送
                 break;
             }
             default:
@@ -170,6 +213,14 @@ void *UDPService(void *arg)
             }
 
         }
+
+        #if 0
+        if(TRANS_VIEW_LIST != g_enTransState)
+        {
+            printf("下载或上传文件结束...\n");
+            break;
+        }
+        #endif
     }
 
     close(sockfd);
@@ -254,7 +305,48 @@ void UDPRcvFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenCli
  *  @param n 参数描述
  *  @return 成功返回字符串地址，失败返回空
  */
-void UDPSendFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenClientAddr)
+void UDPSendFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenClientAddr, const char *pszPath)
 {
+    if((NULL == pszPath) || (NULL == pstClientAddr))
+    {
+        printf("传入参数错误！\n");
+        return;
+    }
 
+    int length = 0;
+    int iRet = 0;
+    int ifd = open(pszPath, O_RDONLY);
+    if (-1 == ifd)
+    {
+        fprintf(stderr, "%s\n",strerror(errno));
+        return;
+    }
+
+    while ((length = read(ifd, g_pszTransBuf, BUFFER_SIZE)) > 0)
+    {
+        //printf("读取%d字节消息\n", length);   //发送
+        if((iRet = (sendto(sockfd, g_pszTransBuf, length, 0, (struct sockaddr*)pstClientAddr, sizeof(struct sockaddr)))) < 0)          
+        {            
+            printf("Send File:%s Failed.\n", pszPath);
+            break; 
+        }
+
+        /* 接收本次发送应答 */
+        if((recvfrom(sockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)pstClientAddr, &iLenClientAddr)) < 0)          
+        {            
+            fprintf(stderr, "%s\n", strerror(errno));
+            break;
+        }
+        if(0 == strncmp(g_szAckBuf, "ok", 2))
+        {
+            printf("发送%d字节消息成功\n", iRet);
+        }
+    }
+     
+    printf("File:%s Transfer Successful!\n", pszPath); 
+
+    close(ifd);
 }
+
+
+

@@ -103,7 +103,7 @@ void UDPService(stServerNode *pstServer)
         printf("文件绝对路径: %s\n", pszPath);
 
         /* 上传之前获取文件SHA1值 */
-        SHA1File(g_pstComTransInfo->szFilename, g_pstComTransInfo->szSHA1);
+        SHA1File(pszPath, g_pstComTransInfo->szSHA1);
         printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1);
 
         
@@ -139,16 +139,99 @@ void UDPService(stServerNode *pstServer)
         UDPSendFile(iSockfd, pszPath, &stServerAddr);
         #endif
 
-        free(pszPath);
+        
     }
     /* 下载操作 */
     else
     {
-        //查看远端服务器文件
-        //选择下载文件
+        //发送查看服务器目录命令
+        g_enTransState = TRANS_DOWNLOAD;   //置为下载状态
+        iRet = sendto(iSockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen);
+        if(-1 == iRet) 
+        {  
+            fprintf(stderr, "%s\n",strerror(errno));
+            return;
+        }
+        else
+        {
+            /* 接收本次发送应答 */
+            if((recvfrom(iSockfd, g_szAckBuf, ACK_SIZE, 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen)) < 0)          
+            {            
+                fprintf(stderr, "%s\n", strerror(errno));
+                return;
+            }
+            if(0 == strncmp(g_szAckBuf, "ok", 2))
+            {
+                printf("服务器已准备好查看\n");
+            }
+        }
+
+        //接收当前工作目录
+        if((recvfrom(iSockfd, pszPath, PATH_MAX, 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen)) < 0)          
+        {            
+            fprintf(stderr, "%s\n", strerror(errno));
+            return;
+        }
+        else
+        {
+            printf("服务器当前工作目录: %s\n", pszPath);
+            if(-1 == sendto(iSockfd, "ok", 2, 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen))
+            {
+                fprintf(stderr, "%s\n", strerror(errno));
+                return;
+            }
+        }
+
+        /* 查看远端服务器文件 */
+        printf("请输入需要查看的目录绝对路径: ");
+        gets_s(pszPath, PATH_MAX, stdin);  //获取输入目录
+        sendto(iSockfd, pszPath, PATH_MAX, 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen);
+        printf("服务器该目录文件列表如下:\n");
+        printf("*******目录文件列表*******\n");
+        while(1)
+        {
+            if((recvfrom(iSockfd, g_pstComTransInfo->szFilename, NAME_MAX, 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen)) < 0)          
+            {            
+                fprintf(stderr, "%s\n", strerror(errno));
+                return;
+            }
+            else
+            {
+                if(0 == strncmp(g_pstComTransInfo->szFilename, "**", 2))
+                {
+                    break;
+                }
+                printf("%s\n", g_pstComTransInfo->szFilename);
+            }
+        }
+        printf("*******目录文件列表*******\n");
+        
+        /* 选择服务器文件 */
+        printf("输入需要下载的文件名:\n");
+        gets_s(g_pstComTransInfo->szFilename, NAME_MAX, stdin);   //获取下载文件名
+        strncat(pszPath, "/", 1);
+        strncat(pszPath, g_pstComTransInfo->szFilename, sizeof(g_pstComTransInfo->szFilename));
+        printf("文件绝对路径: %s\n", pszPath);
+        sendto(iSockfd, pszPath, PATH_MAX, 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen); //将待下载文件绝对路径发给服务器
+
+        /* 接收文件相关信息 */
+        if(-1 == recvfrom(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr*)&stServerAddr, &uliSerAddrLen))
+        {
+            fprintf(stderr, "%s\n",strerror(errno));
+            return;
+        }
+
+        printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
+        printf("FileName: %s\n", g_pstComTransInfo->szFilename);
+        printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+
         //接收文件内容
-        ;
+        UDPRcvFile(iSockfd, &stServerAddr, uliSerAddrLen);
+
+        while(1);
     }
+
+    free(pszPath);
 }
 
  /**@fn 
@@ -195,20 +278,81 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
             printf("发送%d字节消息成功\n", iRet);
         }
     }
-
-    //sendto(iSockfd, "ok", 2, 0, (struct sockaddr*)pstServerAddr, sizeof(struct sockaddr));      
+   
     printf("File:%s Transfer Successful!\n", pszPath); 
 
     close(ifd);
 }
 
+ 
  /**@fn 
  *  @brief  UDP接收文件服务
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述
  */
-void UDPRcvFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServerAddr)
+void UDPRcvFile(int sockfd, struct sockaddr_in *pstServerAddr, socklen_t uliSerAddrLen)
 {
+    fd_set stReadFd;
+    struct timeval sttv = {0, 0};
+    int ifd;
+    int i = 0;  //用于超时计时
+    int iRet;   //用于存储返回值
+    ifd = open(g_pstComTransInfo->szFilename, O_RDWR | O_CREAT, 0664);
+    if(-1 == ifd)
+    {
+        fprintf(stderr, "%s\n",strerror(errno));
+        return;
+    }
 
+    while (1)
+    {
+        FD_ZERO(&stReadFd);
+        FD_SET(sockfd, &stReadFd);
+        sttv.tv_sec = 3;
+        sttv.tv_usec = 0;
+        select(sockfd+1, &stReadFd, NULL, NULL, &sttv);
+        
+        if(FD_ISSET(sockfd, &stReadFd))
+        {
+            i = 0;  //超时时间内收到数据重新计数
+            iRet = recvfrom(sockfd, (char*)g_pszTransBuf, BUFFER_SIZE, 0, (struct sockaddr*)pstServerAddr, &uliSerAddrLen);
+            if(-1 == iRet)
+            {
+                fprintf(stderr, "%s\n",strerror(errno));
+                return;
+            }
+            
+            if(-1 == write(ifd, g_pszTransBuf, iRet))
+            {
+                fprintf(stderr, "%s\n",strerror(errno));
+                return;
+            }
+            
+            //发送响应
+            iRet = sendto(sockfd, "ok", 2, 0, (struct sockaddr*)pstServerAddr, uliSerAddrLen);
+            if(-1 == iRet)
+            {
+                fprintf(stderr, "%s\n",strerror(errno));
+                return;
+            }
+        }
+        else
+        {
+            printf("超时%d次,达到3次本次传输退出!\n", ++i);
+            if(i == 3)
+            {
+                close(ifd);
+                break;
+            }
+        }
+    }
+    
+
+    SHA1File(g_pstComTransInfo->szFilename, g_pszSha1Digest);
+    printf("SHA1: %s\n", g_pszSha1Digest);
+    if(0 == strncmp(g_pstComTransInfo->szSHA1, g_pszSha1Digest, 40))
+    {
+        printf("SHA1相同，文件下载正常\n");
+    }
 }
