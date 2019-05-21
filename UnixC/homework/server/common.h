@@ -17,8 +17,10 @@
 #include <stdint.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <sys/stat.h>
 
 #define COM_SHA1DIGEST_LEN  41      //摘要认证字符串最大长度
 #define BUFFER_SIZE         1024    //发送或接收数据缓存大小
@@ -43,7 +45,8 @@ typedef enum    //传送状态
 {
     TRANS_UPLOAD    =  1,  /**< 上传*/
     TRANS_DOWNLOAD  =  2,  /**< 下载*/
-    TRANS_VIEW_LIST =  3   /**< 查看服务端文件列表*/
+    TRANS_VIEW_LIST =  3,  /**< 查看服务端文件列表*/
+    TRANS_STAND_BY  =  4   /**< 待就绪*/
 }TRANS_STATE_E;
 
 /* 服务器信息 */
@@ -57,6 +60,7 @@ typedef struct tagComTransInfo   //传输文件信息结构
 {
     char            szSHA1[COM_SHA1DIGEST_LEN]; //文件摘要信息
     char            szFilename[NAME_MAX];       //文件名
+    int             iFileSize;                  //文件大小
     TRANS_FLAG_E    enTransFlag;                //传输标志
 }COM_TRANS_INFO_S;
 
@@ -77,6 +81,7 @@ uint16_t CountNodes(stServerNode *pHead);
 void PrintNode(stServerNode *pHead);
 void ProtocolMenu(void);
 void OperateMenu(void);
+int GetFileSize(const char* pszFilePath);
 void PrintWorkDir(void);
 void PrintDirFile(const char* pszDir);
 void UDPSendDirList(const char* pszDir, int sockfd, struct sockaddr_in *pstClientAddr, int iLenClientAddr);

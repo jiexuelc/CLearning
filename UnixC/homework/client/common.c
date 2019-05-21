@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 #include "common.h"
 
@@ -204,6 +205,26 @@ void OperateMenu(void)
 }
 
  /**@fn 
+ *  @brief  获取文件大小函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 失败返回-1，成功返回文件大小
+ */
+int GetFileSize(const char* pszFilePath)
+{
+    struct stat stStat;
+    if(0 == stat(pszFilePath, &stStat))
+    {
+        return stStat.st_size;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+
+ /**@fn 
  *  @brief  打印当前工作目录
  *  @param c 参数描述
  *  @param n 参数描述
@@ -221,7 +242,7 @@ void PrintWorkDir(void)
 
     if(NULL == getcwd(pszPath, PATH_MAX))   //获取当前目录
     {
-        fprintf(stderr, "%s\n",strerror(errno));
+        fprintf(stderr, "%s\n", strerror(errno));
         return;
     }
 

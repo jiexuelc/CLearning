@@ -166,7 +166,7 @@ int main()
         }
         pthread_detach(TCPtid);   //线程分离
 
-        sleep(1);
+        sleep(12);
         continue;
     }
     

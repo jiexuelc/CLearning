@@ -58,6 +58,7 @@ void *TCPService(void *arg)
         {
             case TRANS_UPLOAD:
             {
+                g_enTransState = TRANS_STAND_BY;
                 printf("接收文件中...\n");
                 iRet = recv(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0);
                 if(-1 == iRet)
@@ -74,16 +75,17 @@ void *TCPService(void *arg)
                 /*打印服务器收到的多播信息*/
                 printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
                 printf("FileName: %s\n", g_pstComTransInfo->szFilename);
+                printf("FileSize: %d\n", g_pstComTransInfo->iFileSize);
                 printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
-
-                send(iSockfd, "ok", sizeof("ok"),  0);
             
                 TCPRcvFile(iSockfd);
                 break;
             }
             case TRANS_DOWNLOAD:
             {
-                printf("查看本地文件中...\n");
+                g_enTransState = TRANS_STAND_BY;
+                printf("查看服务器文件中...\n");
+                getcwd(g_pszPath, PATH_MAX);
                 printf("服务器工作目录%s\n", g_pszPath);
                 if(-1 == send(iSockfd, g_pszPath, PATH_MAX,  0))
                 {
@@ -119,6 +121,8 @@ void *TCPService(void *arg)
                 char *tmp = strrchr(g_pszPath, '/');
                 tmp++;
                 snprintf(g_pstComTransInfo->szFilename, NAME_MAX, "%s", tmp);//存储文件名
+                /* 获取文件大小 */
+                g_pstComTransInfo->iFileSize = GetFileSize(g_pszPath);
 
                 /* 发送文件相关信息 */
                 if(-1 == send(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0)) 
@@ -133,22 +137,14 @@ void *TCPService(void *arg)
             }
             case TRANS_VIEW_LIST:
             {
+                g_enTransState = TRANS_STAND_BY;
                 break;
             }
             default:
             {
                 break;
             }
-
         }
-
-        #if 0
-        if(TRANS_VIEW_LIST != g_enTransState)
-        {
-            printf("下载或上传文件结束...\n");
-            break;
-        }
-        #endif
     }
 
     close(iSockfd);
@@ -163,10 +159,10 @@ void *TCPService(void *arg)
 void TCPRcvFile(int iSockfd)
 {
     fd_set stReadFd;
-    struct timeval sttv = {0, 0};
     int ifd;
     int i = 0;  //用于超时计时
     int iRet;   //用于存储返回值
+    int iRevSize = 0;   //用于接收文件大小计数
     ifd = open(g_pstComTransInfo->szFilename, O_RDWR | O_CREAT, 0664);
     if(-1 == ifd)
     {
@@ -178,9 +174,7 @@ void TCPRcvFile(int iSockfd)
     {
         FD_ZERO(&stReadFd);
         FD_SET(iSockfd, &stReadFd);
-        sttv.tv_sec = 3;
-        sttv.tv_usec = 0;
-        select(iSockfd+1, &stReadFd, NULL, NULL, &sttv);
+        select(iSockfd+1, &stReadFd, NULL, NULL, NULL);
         
         if(FD_ISSET(iSockfd, &stReadFd))
         {
@@ -188,22 +182,33 @@ void TCPRcvFile(int iSockfd)
             iRet = recv(iSockfd, (char*)g_pszTransBuf, BUFFER_SIZE, 0);
             if(-1 == iRet)
             {
+                close(ifd);
                 fprintf(stderr, "%s\n",strerror(errno));
                 return;
             }
             
             if(-1 == write(ifd, g_pszTransBuf, iRet))
             {
+                close(ifd);
                 fprintf(stderr, "%s\n",strerror(errno));
                 return;
             }
+
+            iRevSize += iRet;
             
             //发送响应
-            iRet = send(iSockfd, "ok", 2, 0);
+            iRet = send(iSockfd, "ok3", 3, 0);
             if(-1 == iRet)
             {
+                close(ifd);
                 fprintf(stderr, "%s\n",strerror(errno));
                 return;
+            }
+
+            //文件接收计数达到文件大小则接收结束
+            if(iRevSize == g_pstComTransInfo->iFileSize)
+            {
+                break;
             }
         }
         else
@@ -211,6 +216,7 @@ void TCPRcvFile(int iSockfd)
             printf("超时%d次,达到3次本次传输退出!\n", ++i);
             if(i == 3)
             {
+                printf("网络异常，文件传输未完成!\n");
                 close(ifd);
                 break;
             }
@@ -218,6 +224,7 @@ void TCPRcvFile(int iSockfd)
     }
     
 
+    close(ifd);
     SHA1File(g_pstComTransInfo->szFilename, g_pszSha1Digest);
     printf("SHA1: %s\n", g_pszSha1Digest);
     if(0 == strncmp(g_pstComTransInfo->szSHA1, g_pszSha1Digest, 40))
