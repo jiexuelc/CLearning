@@ -1,8 +1,8 @@
 /** @file tcpcli.c
  *  @note 
- *  @brief tcp服务实现
+ *  @brief 客户端tcp服务实现
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月16日 星期四 21时00分46秒
  *  
  *  @note 
@@ -29,7 +29,7 @@
 
 
  /**@fn 
- *  @brief  UDP传输文件服务
+ *  @brief  TCP传输文件服务
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述
@@ -240,7 +240,7 @@ void TCPService(stServerNode *pstServer)
 }
 
  /**@fn 
- *  @brief  TCP发送文件服务
+ *  @brief  TCP发送函数
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述
@@ -290,7 +290,7 @@ void TCPSendFile(int iSockfd, char *pszPath)
 
  
  /**@fn 
- *  @brief  TCP接收文件服务
+ *  @brief  TCP接收函数
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述

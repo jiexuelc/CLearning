@@ -1,8 +1,8 @@
 /** @file udpcli.c
  *  @note 
- *  @brief 说明本文件
+ *  @brief 客户端UDP服务实现
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月17日 星期五 10时16分50秒
  *  
  *  @note 
@@ -235,7 +235,7 @@ void UDPService(stServerNode *pstServer)
 }
 
  /**@fn 
- *  @brief  UDP发送文件服务
+ *  @brief  UDP发送函数
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述
@@ -286,7 +286,7 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
 
  
  /**@fn 
- *  @brief  UDP接收文件服务
+ *  @brief  UDP接收函数
  *  @param c 参数描述.
  *  @param n 参数描述.
  *  @return 返回描述

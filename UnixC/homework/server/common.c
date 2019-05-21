@@ -1,8 +1,8 @@
 /** @file common.c
  *  @note 
- *  @brief 公共函数
+ *  @brief 服务端公共函数
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月16日 星期四 10时58分09秒
  *  
  *  @note 

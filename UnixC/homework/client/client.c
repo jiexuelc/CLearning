@@ -1,6 +1,6 @@
-/** @file 
+/** @file  client.c
  *  @note 
- *  @brief UDP组播实现客户端探测服务器
+ *  @brief 文件传输客户端
  *
  *  @author     
  *  @date       
@@ -27,9 +27,12 @@
 
 
 
-volatile bool timeout = false;
-
-/* 计时线程函数 */
+ /**@fn     CountTime
+ *  @brief  服务器发现计时线程函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 返回描述
+ */
 void *CountTime(void *arg)
 {
     timeout = false;
@@ -38,6 +41,12 @@ void *CountTime(void *arg)
     timeout = true;
 }
 
+ /**@fn     ServerSearch
+ *  @brief  服务器发现函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 返回描述
+ */
 int16_t ServerSearch(stServerNode *pHead)
 {
     int sockfd;
@@ -105,7 +114,14 @@ int16_t ServerSearch(stServerNode *pHead)
     return CountNodes(pHead);
 }
 
-int main(int argc, char* argv[])
+
+ /**@fn     main
+ *  @brief  主函数
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 返回描述
+ */
+int main(void)
 {
     char cTemp = '\0';
     char cBuf;              //用于清空输入尾部的换行符

@@ -1,8 +1,8 @@
 /** @file common.c
  *  @note 
- *  @brief 公共函数
+ *  @brief 客户端公共函数
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月16日 星期四 10时58分09秒
  *  
  *  @note 
@@ -23,15 +23,18 @@
 
 #include "common.h"
 
+
 /* 全局变量定义区 */
 TRANS_STATE_E       g_enTransState;                 //传输状态
 COM_TRANS_INFO_S    *g_pstComTransInfo  = NULL;     //保存文件信息结构
 char                *g_pszTransBuf      = NULL;     //发送或接收缓存
 char                g_szAckBuf[ACK_SIZE];           //接收应答缓存
 char                *g_pszSha1Digest    = NULL;     //用于存储计算接收后文件的摘要
+volatile bool       timeout = false;                //服务器发现计时标志
 /* 全局变量定义区 */
 
- /**@fn 
+
+ /**@fn     gets_s
  *  @brief  带'\0'且丢掉'\n'的字符串获取函数
  *  @param c 参数描述
  *  @param n 参数描述
@@ -49,7 +52,7 @@ char *gets_s(char *str, size_t num, FILE *stream)
     return 0;
 }
 
- /**@fn 
+ /**@fn     IsExist
  *  @brief  检测链表中是否存在该IP信息
  *  @param c 参数描述
  *  @param n 参数描述
@@ -74,7 +77,7 @@ bool IsExist(stServerNode *pHead, char* pIP)
 }
 
 
- /**@fn 
+ /**@fn     AddNode
  *  @brief  将新节点插入头指针后
  *  @param c 参数描述
  *  @param n 参数描述
@@ -109,7 +112,7 @@ void AddNode(stServerNode *pHead, char *pIP, uint16_t usiPort)
     pHead->pstNext = pNode;//将头节点指向插入节点
 }
 
-/**@fn 
+/**@fn      FindNode
  *  @brief  查找指定序号IP服务器信息
  *  @param c 参数描述
  *  @param n 参数描述
@@ -129,8 +132,8 @@ stServerNode *FindNode(stServerNode *pHead, uint16_t iNum)
     return pTemp;
 }
 
-/**@fn 
- *  @brief  查找链表内有效节点数
+/**@fn      CountNodes
+ *  @brief  统计链表内有效节点数
  *  @param c 参数描述
  *  @param n 参数描述
  *  @return 返回描述
@@ -151,7 +154,7 @@ uint16_t CountNodes(stServerNode *pHead)
     return usiNum;
 }
 
- /**@fn 
+ /**@fn     PrintNode
  *  @brief  打印链表中所有的IP服务器信息
  *  @param c 参数描述
  *  @param n 参数描述
@@ -172,8 +175,8 @@ void PrintNode(stServerNode *pHead)
     }
 }
 
- /**@fn 
- *  @brief  协议选项函数
+ /**@fn     ProtocolMenu
+ *  @brief  协议选项菜单
  *  @param c 参数描述
  *  @param n 参数描述
  *  @return 返回描述
@@ -184,8 +187,8 @@ void ProtocolMenu(void)
     printf("     1-UDP    2-TCP\n");
 }
 
- /**@fn 
- *  @brief  操作菜单显示
+ /**@fn     OperateMenu
+ *  @brief  传输方向操作菜单
  *  @param c 参数描述
  *  @param n 参数描述
  *  @return 返回描述
@@ -201,7 +204,7 @@ void OperateMenu(void)
 }
 
  /**@fn 
- *  @brief  打印当前目录
+ *  @brief  打印当前工作目录
  *  @param c 参数描述
  *  @param n 参数描述
  *  @return 返回描述
@@ -226,7 +229,7 @@ void PrintWorkDir(void)
     free(pszPath);
 }
 
- /**@fn 
+ /**@fn     PrintDirFile
  *  @brief  打印指定目录文件列表
  *  @param c 参数描述
  *  @param n 参数描述

@@ -390,7 +390,12 @@ void SHA1PadMessage(SHA1Context *context)
     SHA1ProcessMessageBlock(context);
 }
 
-/* Digests a file and prints the result.
+
+ /**@fn     SHA1File
+ *  @brief  计算传入文件的摘要值
+ *  @param c 参数描述
+ *  @param n 参数描述
+ *  @return 
  */
 int SHA1File (const char *filename, char *pszSha1Digest)
 {

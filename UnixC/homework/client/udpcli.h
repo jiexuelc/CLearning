@@ -1,8 +1,8 @@
 /** @file udpcli.h
  *  @note 
- *  @brief 说明本文件
+ *  @brief 客户端UDP服务实现头文件
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月17日 星期五 10时16分56秒
  *  
  *  @note 

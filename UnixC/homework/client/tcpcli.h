@@ -1,8 +1,8 @@
 /** @file tcpcli.h
  *  @note 
- *  @brief 说明本文件
+ *  @brief 客户端tcp服务实现头文件
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月16日 星期四 21时01分38秒
  *  
  *  @note 

@@ -1,6 +1,6 @@
-/** @file 
+/** @file  server.c
  *  @note 
- *  @brief UDP组播服务器端实现
+ *  @brief 文件服务器端实现
  *
  *  @author     
  *  @date       
@@ -134,7 +134,6 @@ int main()
         close(iSerSockFd);
         return;
     }
-    printf("1\n");
     #endif
     
     if(-1 == bind(iSerSockFd, (struct sockaddr*) &stServerAddr, sizeof(stServerAddr)))
@@ -143,15 +142,11 @@ int main()
         return 1;
     }
 
-    printf("2\n");
-
     if(-1 == listen(iSerSockFd, 16))
     {
         fprintf(stderr, "%s\n", strerror(errno));
         return 1;
     }
-
-    printf("3\n");
 
     while (1)
     {

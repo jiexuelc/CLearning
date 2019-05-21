@@ -1,8 +1,8 @@
 /** @file common.h
  *  @note 
- *  @brief 公共函数头
+ *  @brief 客户端公共函数头
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月16日 星期四 10时58分18秒
  *  
  *  @note 
@@ -64,6 +64,7 @@ extern COM_TRANS_INFO_S    *g_pstComTransInfo;     //保存文件信息结构
 extern char                *g_pszTransBuf;         //发送或接收缓存
 extern char                g_szAckBuf[ACK_SIZE];   //接收应答缓存
 extern char                *g_pszSha1Digest;       //用于存储计算接收后文件的摘要
+extern volatile bool       timeout;                //服务器发现计时标志
 /* 全局变量声明区 */
 
 

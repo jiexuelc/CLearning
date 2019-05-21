@@ -1,8 +1,8 @@
 /** @file tcpser.c
  *  @note 
- *  @brief 说明本文件
+ *  @brief 服务端TCP服务实现
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月20日 星期一 19时34分59秒
  *  
  *  @note 

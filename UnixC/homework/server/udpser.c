@@ -1,8 +1,8 @@
 /** @file udpser.c
  *  @note 
- *  @brief 说明本文件
+ *  @brief 服务端UDP服务实现
  *  
- *  @author jiexue
+ *  @author 
  *  @date 2019年05月19日 星期日 11时23分30秒
  *  
  *  @note 
