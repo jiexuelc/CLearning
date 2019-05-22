@@ -176,6 +176,27 @@ void PrintNode(stServerNode *pHead)
     }
 }
 
+  /**@fn     DeleteList
+  *  @brief  链表资源释放
+  *  @param c 参数描述
+  *  @param n 参数描述
+  *  @return 返回描述
+  */
+ void DeleteList(stServerNode *pHead)
+ {
+    assert(pHead != NULL);
+
+    stServerNode *pTemp = pHead;
+ 
+    while(NULL != pHead)
+    {
+        pTemp = pHead->pstNext;
+        free(pHead);
+        pHead = pTemp;
+    }
+ }
+
+
  /**@fn     ProtocolMenu
  *  @brief  协议选项菜单
  *  @param c 参数描述

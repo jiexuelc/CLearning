@@ -70,6 +70,8 @@ void *UDPService(void *arg)
         return;
     }
 
+    printf("UDP服务已开启...\n");
+
     struct ip_mreq stMreq;/*加入多播组*/
     stMreq.imr_multiaddr.s_addr = inet_addr(MCAST_ADDR);//多播地址
     stMreq.imr_interface.s_addr = htonl(INADDR_ANY); //网络接口为默认
@@ -81,8 +83,10 @@ void *UDPService(void *arg)
         fprintf(stderr, "%s\n",strerror(errno));
         return;
     }
+
+    printf("使能服务器可被发现...\n");
     
-    /*循环接收多播组的消息*/
+    /* 接收多播组的消息 */
     //while (1)
     {
         memset(&stClientAddr, 0, iLenClientAddr);
@@ -96,12 +100,12 @@ void *UDPService(void *arg)
         }
         
         /*打印服务器收到的多播信息*/
-        printf("buffer: %s\n", g_pszTransBuf);
+        //printf("buffer: %s\n", g_pszTransBuf);
         if(0 == strncmp(g_pszTransBuf, "build", 5))
         {
             memset(szClientAddr, 0, sizeof(szClientAddr)); 
             inet_ntop(AF_INET, &stClientAddr.sin_addr, szClientAddr, sizeof(szClientAddr));
-            printf("client IP: %s Port: %d\n", szClientAddr, ntohs(stClientAddr.sin_port));
+            printf("client客户端[%s:%d]已找到该服务器\n", szClientAddr, ntohs(stClientAddr.sin_port));
 
             sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
         }
@@ -109,11 +113,13 @@ void *UDPService(void *arg)
 
     /*退出多播组, 退出服务器发现状态*/
     iErrno = setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &stMreq, sizeof(stMreq));
+
+    printf("退出服务器可被发现状态...\n");
  
     /* 循环接收消息 */
     while (1)
     {
-        printf("等待接收传输状态...\n");
+        //printf("等待接收传输状态...\n");
         iRet = recvfrom(sockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
         if(-1 == iRet)
         {
@@ -122,7 +128,7 @@ void *UDPService(void *arg)
         }
         
         /*打印服务器收到的传输标志信息*/
-        printf("g_enTransState: %d\n", g_enTransState);
+        //printf("g_enTransState: %d\n", g_enTransState);
 
         sendto(sockfd, "ok", sizeof("ok"),  0, (struct sockaddr *)&stClientAddr, iLenClientAddr);
 
@@ -131,7 +137,7 @@ void *UDPService(void *arg)
             case TRANS_UPLOAD:
             {
                 g_enTransState = TRANS_STAND_BY;
-                printf("接收文件中...\n");
+                printf("接收客户端文件中...\n");
                 iRet = recvfrom(sockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
                 if(-1 == iRet)
                 {
@@ -148,7 +154,7 @@ void *UDPService(void *arg)
                 printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
                 printf("FileName: %s\n", g_pstComTransInfo->szFilename);
                 printf("FileSize: %d\n", g_pstComTransInfo->iFileSize);
-                printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+                //printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
             
                 UDPRcvFile(sockfd, &stClientAddr, iLenClientAddr);
                 break;
@@ -156,8 +162,9 @@ void *UDPService(void *arg)
             case TRANS_DOWNLOAD:
             {
                 g_enTransState = TRANS_STAND_BY;
-                printf("查看本地文件中...\n");
-                printf("服务器工作目录%s\n", g_pszPath);
+                printf("查看服务器文件中...\n");
+                getcwd(g_pszPath, PATH_MAX);
+                printf("服务器工作目录:%s\n", g_pszPath);
                 if(-1 == sendto(sockfd, g_pszPath, PATH_MAX,  0, (struct sockaddr *)&stClientAddr, iLenClientAddr))
                 {
                     fprintf(stderr, "%s\n",strerror(errno));
@@ -173,7 +180,7 @@ void *UDPService(void *arg)
                     else
                     {
                         strncmp(g_szAckBuf, "ok", 2);
-                        printf("本地目录发送成功！\n");
+                        printf("服务器目录发送成功!\n");
                     }
                 }
 
@@ -185,10 +192,10 @@ void *UDPService(void *arg)
                 recvfrom(sockfd, g_pszPath, PATH_MAX, 0, (struct sockaddr*)&stClientAddr, &iLenClientAddr);
 
                 /* 向客户端传输文件 */
-                printf("向客户端传输文件中...\n");
+                printf("向客户端传输文件信息中...\n");
                 /* 传输之前获取文件SHA1值 */
                 SHA1File(g_pszPath, g_pstComTransInfo->szSHA1);         //存储SHA1摘要
-                printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1); 
+                printf("客户端待下载文件SHA1: %s\n", g_pstComTransInfo->szSHA1); 
                 char *tmp = strrchr(g_pszPath, '/');
                 tmp++;
                 snprintf(g_pstComTransInfo->szFilename, NAME_MAX, "%s", tmp);//存储文件名
@@ -206,25 +213,11 @@ void *UDPService(void *arg)
 
                 break;
             }
-            case TRANS_VIEW_LIST:
-            {
-                g_enTransState = TRANS_STAND_BY;
-                break;
-            }
             default:
             {
                 break;
             }
-
         }
-
-        #if 0
-        if(TRANS_VIEW_LIST != g_enTransState)
-        {
-            printf("下载或上传文件结束...\n");
-            break;
-        }
-        #endif
     }
 
     close(sockfd);
@@ -308,7 +301,7 @@ void UDPRcvFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenCli
     
     close(ifd);
     SHA1File(g_pstComTransInfo->szFilename, g_pszSha1Digest);
-    printf("SHA1: %s\n", g_pszSha1Digest);
+    printf("客户端上传文件SHA1: %s\n", g_pszSha1Digest);
     if(0 == strncmp(g_pstComTransInfo->szSHA1, g_pszSha1Digest, 40))
     {
         printf("SHA1相同，文件传输正常\n");
@@ -343,7 +336,7 @@ void UDPSendFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenCl
         //printf("读取%d字节消息\n", length);   //发送
         if((iRet = (sendto(sockfd, g_pszTransBuf, length, 0, (struct sockaddr*)pstClientAddr, sizeof(struct sockaddr)))) < 0)          
         {            
-            printf("Send File:%s Failed.\n", pszPath);
+            printf("%s发送文件失败!\n", pszPath);
             break; 
         }
 
@@ -355,11 +348,11 @@ void UDPSendFile(int sockfd, struct sockaddr_in *pstClientAddr, socklen_t iLenCl
         }
         if(0 == strncmp(g_szAckBuf, "ok", 2))
         {
-            printf("发送%d字节消息成功\n", iRet);
+            //printf("发送%d字节消息成功\n", iRet);
         }
     }
      
-    printf("File:%s Transfer Successful!\n", pszPath); 
+    printf("%s发送文件成功!\n", pszPath); 
 
     close(ifd);
 }

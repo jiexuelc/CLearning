@@ -94,7 +94,7 @@ void TCPService(stServerNode *pstServer)
                 }
                 if(0 == strncmp(g_szAckBuf, "ok", 2))
                 {
-                    printf("服务器已准备接收文件\n");
+                    printf("服务器已准备好接收文件\n");
                 }
             }
 
@@ -111,12 +111,12 @@ void TCPService(stServerNode *pstServer)
 
             /* 上传之前获取文件SHA1值 */
             SHA1File(pszPath, g_pstComTransInfo->szSHA1);
-            printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1);
+            printf("待上传文件SHA1:      %s\n", g_pstComTransInfo->szSHA1);
             /* 获取文件大小 */
             g_pstComTransInfo->iFileSize = GetFileSize(pszPath);
-
+            printf("待上传文件大小: %d\n", g_pstComTransInfo->iFileSize);
             
-            g_pstComTransInfo->enTransFlag = TRANS_REQ;         //置为上传请求
+            //g_pstComTransInfo->enTransFlag = TRANS_REQ;         //置为上传请求
 
             /* 发送文件相关信息 */
             iRet = send(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0);
@@ -232,7 +232,7 @@ void TCPService(stServerNode *pstServer)
             printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
             printf("FileName: %s\n", g_pstComTransInfo->szFilename);
             printf("FileSize: %d\n", g_pstComTransInfo->iFileSize);
-            printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+            //printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
 
             //接收文件内容
             TCPRcvFile(iSockfd);
@@ -271,7 +271,7 @@ void TCPSendFile(int iSockfd, char *pszPath)
         //printf("读取%d字节消息\n", length);   //发送
         if((iRet = send(iSockfd, g_pszTransBuf, length, 0)) < 0)          
         {            
-            printf("Send File:%s Failed.\n", pszPath);
+            printf("%s文件发送失败!\n", pszPath);
             break; 
         }
 
@@ -283,11 +283,12 @@ void TCPSendFile(int iSockfd, char *pszPath)
         }
         if(0 == strncmp(g_szAckBuf, "ok", 2))
         {
-            printf("发送%d字节消息成功\n", iRet);
+            ;
+            //printf("发送%d字节消息成功\n", iRet);
         }
     }
    
-    printf("File:%s Transfer Successful!\n", pszPath); 
+    printf("%s文件发送成功!\n", pszPath); 
 
     close(ifd);
 }

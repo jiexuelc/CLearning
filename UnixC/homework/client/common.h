@@ -27,6 +27,7 @@
 #define ACK_SIZE            4       //应答缓存大小
 
 
+#if 0
 typedef enum    //传输标志
 {
     TRANS_REQ       =  1,  /**< 请求*/
@@ -35,6 +36,7 @@ typedef enum    //传输标志
     TRANS_AGAIN     =  4,  /**< 重传*/
     TRANS_ACK       =  5   /**< 确认*/
 }TRANS_FLAG_E;
+#endif
 
 typedef enum    //传送状态
 {
@@ -56,7 +58,7 @@ typedef struct tagComTransInfo   //传输文件信息结构
     char            szSHA1[COM_SHA1DIGEST_LEN]; //文件摘要信息
     char            szFilename[NAME_MAX];       //文件名
     int             iFileSize;                  //文件大小
-    TRANS_FLAG_E    enTransFlag;                //传输标志
+    //TRANS_FLAG_E    enTransFlag;                //传输标志
 }COM_TRANS_INFO_S;
 
 
@@ -76,6 +78,8 @@ void AddNode(stServerNode *pHead, char *pIP, uint16_t usiPort);
 stServerNode *FindNode(stServerNode *pHead, uint16_t iNum);
 uint16_t CountNodes(stServerNode *pHead);
 void PrintNode(stServerNode *pHead);
+void DeleteList(stServerNode *pHead);
+
 void ProtocolMenu(void);
 void OperateMenu(void);
 int GetFileSize(const char* pszFilePath);

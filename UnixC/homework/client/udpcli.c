@@ -90,7 +90,7 @@ void UDPService(stServerNode *pstServer)
                 }
                 if(0 == strncmp(g_szAckBuf, "ok", 2))
                 {
-                    printf("服务器已准备接收文件\n");
+                    printf("服务器已准备好接收文件...\n");
                 }
             }
 
@@ -99,7 +99,7 @@ void UDPService(stServerNode *pstServer)
             gets_s(pszPath, PATH_MAX, stdin);  //获取输入目录
             PrintDirFile(pszPath);  //输出输入目录下的文件及目录
             
-            printf("输入需要上传的文件名:\n");
+            printf("输入需要上传的文件名: \n");
             gets_s(g_pstComTransInfo->szFilename, NAME_MAX, stdin);   //获取上传文件名
             strncat(pszPath, "/", 1);
             strncat(pszPath, g_pstComTransInfo->szFilename, sizeof(g_pstComTransInfo->szFilename));
@@ -107,12 +107,12 @@ void UDPService(stServerNode *pstServer)
 
             /* 上传之前获取文件SHA1值 */
             SHA1File(pszPath, g_pstComTransInfo->szSHA1);
-            printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1);
+            printf("待上传文件SHA1: %s\n", g_pstComTransInfo->szSHA1);
             /* 获取文件大小 */
             g_pstComTransInfo->iFileSize = GetFileSize(pszPath);
-            printf("上传文件大小: %d\n", g_pstComTransInfo->iFileSize);
+            printf("待上传文件大小: %d\n", g_pstComTransInfo->iFileSize);
 
-            g_pstComTransInfo->enTransFlag = TRANS_REQ;         //置为上传请求
+            //g_pstComTransInfo->enTransFlag = TRANS_REQ;         //置为上传请求
 
             /* 发送文件相关信息 */
             iRet = sendto(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0, (struct sockaddr *)&stServerAddr, uliSerAddrLen);
@@ -230,7 +230,7 @@ void UDPService(stServerNode *pstServer)
             printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
             printf("FileName: %s\n", g_pstComTransInfo->szFilename);
             printf("FileSize: %d\n", g_pstComTransInfo->iFileSize);
-            printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+            //printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
 
             //接收文件内容
             UDPRcvFile(iSockfd, &stServerAddr, uliSerAddrLen);
@@ -270,7 +270,7 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
         if((iRet = (sendto(iSockfd, g_pszTransBuf, length, 0, (struct sockaddr*)pstServerAddr, sizeof(struct sockaddr)))) < 0)          
         {           
             close(ifd);
-            printf("Send File:%s Failed.\n", pszPath);
+            printf("%s文件发送失败!\n", pszPath);
             break; 
         }
 
@@ -283,11 +283,12 @@ void UDPSendFile(int iSockfd, const char *pszPath, struct sockaddr_in *pstServer
         }
         if(0 == strncmp(g_szAckBuf, "ok", 2))
         {
-            printf("发送%d字节消息成功\n", iRet);
+            ;
+            //printf("发送%d字节消息成功\n", iRet);
         }
     }
    
-    printf("File:%s Transfer Successful!\n", pszPath); 
+    printf("%s文件发送成功!\n", pszPath); 
 
     close(ifd);
 }
@@ -372,7 +373,7 @@ void UDPRcvFile(int sockfd, struct sockaddr_in *pstServerAddr, socklen_t uliSerA
 
     close(ifd);
     SHA1File(g_pstComTransInfo->szFilename, g_pszSha1Digest);
-    printf("SHA1: %s\n", g_pszSha1Digest);
+    printf("从服务器下载文件SHA1: %s\n", g_pszSha1Digest);
     if(0 == strncmp(g_pstComTransInfo->szSHA1, g_pszSha1Digest, 40))
     {
         printf("SHA1相同，文件下载正常\n");

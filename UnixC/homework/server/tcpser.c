@@ -41,7 +41,7 @@ void *TCPService(void *arg)
     /* 循环接收消息 */
     while (1)
     {
-        printf("等待接收传输状态...\n");
+        //printf("等待接收传输状态...\n");
         iRet = recv(iSockfd, (TRANS_STATE_E*)&g_enTransState, sizeof(TRANS_STATE_E), 0);
         if(-1 == iRet)
         {
@@ -50,7 +50,7 @@ void *TCPService(void *arg)
         }
         
         /*打印服务器收到的传输标志信息*/
-        printf("g_enTransState: %d\n", g_enTransState);
+        //printf("g_enTransState: %d\n", g_enTransState);
 
         send(iSockfd, "ok", sizeof("ok"),  0);
 
@@ -59,7 +59,7 @@ void *TCPService(void *arg)
             case TRANS_UPLOAD:
             {
                 g_enTransState = TRANS_STAND_BY;
-                printf("接收文件中...\n");
+                printf("客户端上传文件中...\n");
                 iRet = recv(iSockfd, (COM_TRANS_INFO_S*)g_pstComTransInfo, sizeof(COM_TRANS_INFO_S), 0);
                 if(-1 == iRet)
                 {
@@ -72,11 +72,11 @@ void *TCPService(void *arg)
                     send(iSockfd, "ok", sizeof("ok"),  0);
                 }
                 
-                /*打印服务器收到的多播信息*/
+                /*打印服务器收到的文件信息*/
                 printf("SHA1: %s\n", g_pstComTransInfo->szSHA1);
                 printf("FileName: %s\n", g_pstComTransInfo->szFilename);
                 printf("FileSize: %d\n", g_pstComTransInfo->iFileSize);
-                printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
+                //printf("enTransFlag: %d\n", g_pstComTransInfo->enTransFlag);
             
                 TCPRcvFile(iSockfd);
                 break;
@@ -86,7 +86,7 @@ void *TCPService(void *arg)
                 g_enTransState = TRANS_STAND_BY;
                 printf("查看服务器文件中...\n");
                 getcwd(g_pszPath, PATH_MAX);
-                printf("服务器工作目录%s\n", g_pszPath);
+                printf("服务器工作目录:%s\n", g_pszPath);
                 if(-1 == send(iSockfd, g_pszPath, PATH_MAX,  0))
                 {
                     fprintf(stderr, "%s\n",strerror(errno));
@@ -102,7 +102,7 @@ void *TCPService(void *arg)
                     else
                     {
                         strncmp(g_szAckBuf, "ok", 2);
-                        printf("本地目录发送成功！\n");
+                        printf("服务器目录发送成功!\n");
                     }
                 }
 
@@ -114,10 +114,10 @@ void *TCPService(void *arg)
                 recv(iSockfd, g_pszPath, PATH_MAX, 0);
 
                 /* 向客户端传输文件 */
-                printf("向客户端传输文件中...\n");
+                printf("向客户端传输文件信息中...\n");
                 /* 传输之前获取文件SHA1值 */
                 SHA1File(g_pszPath, g_pstComTransInfo->szSHA1);         //存储SHA1摘要
-                printf("所选文件SHA1: %s\n", g_pstComTransInfo->szSHA1); 
+                printf("客户端待下载文件SHA1: %s\n", g_pstComTransInfo->szSHA1); 
                 char *tmp = strrchr(g_pszPath, '/');
                 tmp++;
                 snprintf(g_pstComTransInfo->szFilename, NAME_MAX, "%s", tmp);//存储文件名
@@ -133,11 +133,6 @@ void *TCPService(void *arg)
 
                 TCPSendFile(iSockfd, g_pszPath);
 
-                break;
-            }
-            case TRANS_VIEW_LIST:
-            {
-                g_enTransState = TRANS_STAND_BY;
                 break;
             }
             default:
@@ -178,7 +173,6 @@ void TCPRcvFile(int iSockfd)
         
         if(FD_ISSET(iSockfd, &stReadFd))
         {
-            i = 0;  //超时时间内收到数据重新计数
             iRet = recv(iSockfd, (char*)g_pszTransBuf, BUFFER_SIZE, 0);
             if(-1 == iRet)
             {
@@ -211,22 +205,12 @@ void TCPRcvFile(int iSockfd)
                 break;
             }
         }
-        else
-        {
-            printf("超时%d次,达到3次本次传输退出!\n", ++i);
-            if(i == 3)
-            {
-                printf("网络异常，文件传输未完成!\n");
-                close(ifd);
-                break;
-            }
-        }
     }
     
 
     close(ifd);
     SHA1File(g_pstComTransInfo->szFilename, g_pszSha1Digest);
-    printf("SHA1: %s\n", g_pszSha1Digest);
+    printf("客户端上传文件SHA1: %s\n", g_pszSha1Digest);
     if(0 == strncmp(g_pstComTransInfo->szSHA1, g_pszSha1Digest, 40))
     {
         printf("SHA1相同，文件传输正常\n");
@@ -260,24 +244,26 @@ void TCPSendFile(int iSockfd, const char *pszPath)
     {
         //printf("读取%d字节消息\n", length);   //发送
         if((iRet = send(iSockfd, g_pszTransBuf, length, 0)) < 0)
-        {            
-            printf("Send File:%s Failed.\n", pszPath);
+        {
+            close(ifd);
+            printf("%s发送文件失败!\n", pszPath);
             break; 
         }
 
         /* 接收本次发送应答 */
         if(recv(iSockfd, g_szAckBuf, ACK_SIZE, 0) < 0)
-        {            
+        {
+            close(ifd);
             fprintf(stderr, "%s\n", strerror(errno));
             break;
         }
         if(0 == strncmp(g_szAckBuf, "ok", 2))
         {
-            printf("发送%d字节消息成功\n", iRet);
+            //printf("发送%d字节消息成功\n", iRet);
         }
     }
      
-    printf("File:%s Transfer Successful!\n", pszPath); 
+    printf("%s发送文件成功!\n", pszPath); 
 
     close(ifd);
 }

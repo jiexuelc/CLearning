@@ -31,7 +31,7 @@
 #define BUFF_SIZE 256               //接收缓冲区大小
 
 
-
+#if 0
 typedef enum    //传输标志
 {
     TRANS_REQ       =  1,  /**< 请求*/
@@ -40,6 +40,7 @@ typedef enum    //传输标志
     TRANS_AGAIN     =  4,  /**< 重传*/
     TRANS_ACK       =  5   /**< 确认*/
 }TRANS_FLAG_E;
+#endif
 
 typedef enum    //传送状态
 {
@@ -61,7 +62,7 @@ typedef struct tagComTransInfo   //传输文件信息结构
     char            szSHA1[COM_SHA1DIGEST_LEN]; //文件摘要信息
     char            szFilename[NAME_MAX];       //文件名
     int             iFileSize;                  //文件大小
-    TRANS_FLAG_E    enTransFlag;                //传输标志
+    //TRANS_FLAG_E    enTransFlag;                //传输标志
 }COM_TRANS_INFO_S;
 
 /* 全局变量定义区 */

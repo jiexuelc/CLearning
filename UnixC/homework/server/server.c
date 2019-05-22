@@ -104,7 +104,7 @@ int main()
     memset(&stClientAddr, 0, sizeof(stClientAddr));
     memset(&stServerAddr, 0, sizeof(stServerAddr));
     getcwd(g_pszPath, PATH_MAX);    //获取当前工作目录
-    printf("Working Path: %s\n", g_pszPath);
+    //printf("Working Path: %s\n", g_pszPath);
 
 
     /* 创建UDP服务线程 */
@@ -148,6 +148,8 @@ int main()
         return 1;
     }
 
+    printf("TCP服务已开启...\n");
+    
     while (1)
     {
         if(-1 == (iCliSockFd = accept(iSerSockFd, (struct sockaddr *) &stClientAddr, &iCliAddrLen)))
@@ -155,9 +157,8 @@ int main()
             fprintf(stderr, "%s\n", strerror(errno));
             return 1;
         }
-        printf("iCliSockFd = %d\n", iCliSockFd);
         inet_ntop(AF_INET, &stClientAddr.sin_addr, szClientAddr, sizeof(szClientAddr));
-        printf("TCP Client: %s: port is %d\n", szClientAddr, ntohs(stClientAddr.sin_port));
+        printf("TCP客户端[%s:%d]已建立连接...\n", szClientAddr, ntohs(stClientAddr.sin_port));
         /* 创建线程为其服务 */
         if(-1 == pthread_create(&TCPtid, NULL, TCPService, (void *)&iCliSockFd))
         {
@@ -166,7 +167,7 @@ int main()
         }
         pthread_detach(TCPtid);   //线程分离
 
-        sleep(12);
+        sleep(1);
         continue;
     }
     

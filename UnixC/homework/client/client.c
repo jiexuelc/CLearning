@@ -37,7 +37,7 @@ void *CountTime(void *arg)
 {
     timeout = false;
     sleep(1);
-    printf("Out of time!\n");
+    printf("超时时间到!\n");
     timeout = true;
 }
 
@@ -85,13 +85,13 @@ int16_t ServerSearch(stServerNode *pHead)
         }
         else
         {
-            /* 5s内未收到服务器端回复信息视为未找到服务器 */
+            /* 10s内未收到服务器端回复信息视为未找到服务器 */
             pthread_t tid;  ///计时线程id
             pthread_create(&tid, NULL, CountTime, NULL);
             pthread_detach(tid);///分离线程
             timeout = false;
             
-            /* 计时5s内一直查收服务器发来的信息 */
+            /* 计时10s内一直查收服务器发来的信息 */
             while (false == timeout)
             {
                 iRet = recvfrom(sockfd, szBuf, sizeof(szBuf), 0, (struct sockaddr*)&stServerAddr, &iLenServerAddr);
@@ -102,7 +102,7 @@ int16_t ServerSearch(stServerNode *pHead)
                     usiServerPort = ntohs(stServerAddr.sin_port);
                     printf("服务器IP: %s port: %hu\n", szServerAddr, usiServerPort);
 
-                    if (false == IsExist(pHead, szServerAddr))///检查链表中IP是否存在
+                    if (false == IsExist(pHead, szServerAddr))  //检查链表中IP是否存在
                     {
                         AddNode(pHead, szServerAddr, usiServerPort);
                     }
@@ -213,6 +213,8 @@ int main(void)
     {
         TCPService(pstServer);
     }
+
+    DeleteList(pHead);  //释放链表资源
 
     free(g_pstComTransInfo);
     g_pstComTransInfo = NULL;
